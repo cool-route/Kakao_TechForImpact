@@ -4,7 +4,7 @@
   "content_type": "application/json",
   "modes": ["노약자", "반려동물", "일반"],
   "geojson_coordinate_order": "[lng, lat]",
-  "api_contract_status": "fixed_for_frontend_dummy_integration",
+  "api_contract_status": "fixed_for_frontend_integration",
   "endpoints": {
     "healthcheck": {
       "method": "GET",
@@ -18,7 +18,7 @@
     "create_route": {
       "method": "POST",
       "path": "/route",
-      "description": "mode, start, end를 받아 더미 그래프 기준 시원한 경로 한 개를 계산한다.",
+      "description": "mode, start, end를 받아 실데이터 그래프 기준 시원한 경로 한 개를 계산한다. 실데이터 파일이 없으면 더미 그래프로 fallback한다.",
       "request": {
         "mode": "노약자 | 반려동물 | 일반",
         "start": [37.3219, 127.0972],
@@ -61,7 +61,7 @@
             "operating_hours": "09:00-18:00"
           }
         ],
-        "is_dummy": true
+        "is_dummy": false
       }
     },
     "list_routes": {
@@ -116,16 +116,51 @@
               "operating_hours": "09:00-18:00"
             }
           ],
-          "is_dummy": true
+          "is_dummy": false
         }
       ]
+    }
+  },
+  "frontend_tooltip_fields": {
+    "heat_score": {
+      "label": "더위 점수",
+      "description": "낮을수록 쾌적한 구간"
+    },
+    "temperature": {
+      "label": "체감온도",
+      "description": "섭씨 기준 온도"
+    },
+    "uv": {
+      "label": "자외선",
+      "description": "값이 없으면 0.0"
+    },
+    "shade_ratio": {
+      "label": "그늘 비율",
+      "description": "0~1 사이 비율"
+    },
+    "ground_temp": {
+      "label": "지면온도",
+      "description": "반려동물 모드에서 고온 구간 회피에 사용"
+    },
+    "wind": {
+      "label": "풍속",
+      "description": "높을수록 더 시원한 경향"
+    },
+    "distance_m": {
+      "label": "거리",
+      "description": "미터 단위"
+    },
+    "shelter_name": {
+      "label": "쉼터",
+      "description": "해당 구간에 연결된 쉼터 이름. 없으면 null"
     }
   },
   "frontend_notes": [
     "POST /route의 request 좌표는 [lat, lng] 순서다.",
     "GeoJSON coordinates는 표준대로 [lng, lat] 순서다.",
     "한글 mode를 query string으로 보낼 때는 브라우저 fetch 또는 URLSearchParams를 사용하면 자동 인코딩된다.",
-    "is_dummy가 true이면 아직 실데이터가 아닌 더미 라우팅 응답이다."
+    "is_dummy가 true이면 더미 그래프 응답이고, false이면 실데이터 그래프 응답이다.",
+    "지도 선분 툴팁은 feature.properties의 heat_score, temperature, uv, shade_ratio, ground_temp, wind, distance_m, shelter_name을 우선 사용한다."
   ],
   "data_contract": {
     "document": "docs/DATA_CONTRACT.md",
@@ -135,13 +170,18 @@
   "routing_policy": {
     "document": "docs/ROUTING_POLICY.md",
     "route_specs": "data/route_specs.json",
+    "route_seed_script": "scripts/seed_routes.py",
     "pet_ground_temp_limit": 28.0
   },
   "handoff": {
     "document": "docs/TEAM_HANDOFF.md"
   },
+  "performance": {
+    "document": "docs/PERFORMANCE.md",
+    "benchmark_script": "scripts/benchmark_api.py"
+  },
   "backend_loader": {
     "module": "app/services/geojson_loader.py",
-    "functions": ["load_graph_from_geojson", "load_shelters"]
+    "functions": ["load_graph_from_nodes_and_edges", "load_graph_from_geojson", "load_shelters"]
   }
 }

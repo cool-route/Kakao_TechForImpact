@@ -5,34 +5,33 @@ import geopandas as gpd
 place_name = "Suji-gu, Yongin-si, South Korea"
 
 # 2. 도로 네트워크 가져오기
-G = ox.graph_from_place(place_name, network_type="drive")
+G = ox.graph_from_place(
+    place_name,
+    network_type="drive"
+)
 
 # 3. 노드/엣지로 변환
 nodes, edges = ox.graph_to_gdfs(G)
 
+# ⭐ EPSG:5186으로 변환
+nodes = nodes.to_crs(epsg=5186)
+edges = edges.to_crs(epsg=5186)
+
 # 4. 저장
-nodes.to_file("sujiku_nodes.geojson", driver="GeoJSON")
-edges.to_file("sujiku_edges.geojson", driver="GeoJSON")
+nodes.to_file(
+    "sujiku_nodes_5186.geojson",
+    driver="GeoJSON"
+)
+
+edges.to_file(
+    "sujiku_edges_5186.geojson",
+    driver="GeoJSON"
+)
 
 print("완료!")
 
+# 확인
+print(nodes.crs)
+print(edges.crs)
 
-nodes = gpd.read_file("sujiku_nodes.geojson")
 print(nodes.head())
-
-# 확인용 위경도 값
-# print(nodes.crs)
-
-# 확인용 지도 출력
-# import folium
-#
-# # 중심 좌표 (수지구청 근처)
-# m = folium.Map(location=[37.32, 127.09], zoom_start=13)
-#
-# for _, row in nodes.head(100).iterrows():
-#     folium.CircleMarker(
-#         location=[row.geometry.y, row.geometry.x],
-#         radius=2
-#     ).add_to(m)
-#
-# m.save("map.html")
