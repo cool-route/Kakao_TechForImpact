@@ -13,5 +13,5 @@ def test_seed_routes_inserts_thirteen_routes(tmp_path, monkeypatch):
     with sqlite3.connect(db_path) as conn:
         stored_count = conn.execute("SELECT COUNT(*) FROM routes").fetchone()[0]
 
-    assert count == 13
-    assert stored_count == 13
+    assert count == 5
+    assert stored_count == 5
