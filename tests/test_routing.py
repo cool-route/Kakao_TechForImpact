@@ -1,4 +1,4 @@
-from app.services.routing import get_recommended_routes, load_route_specs, shortest_cool_route
+from app.services.route_service import get_recommended_routes, load_route_specs, shortest_cool_route
 
 
 START = (37.3219, 127.0972)

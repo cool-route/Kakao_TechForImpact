@@ -1,5 +1,6 @@
 from app.main import healthcheck
-from app.routers.route import RouteRequest, create_route, list_routes
+from app.api.routes import create_route, list_routes
+from app.schemas.routes import RouteRequest
 
 
 def test_healthcheck():

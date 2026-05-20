@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
 from app.services.geojson_loader import load_graph_from_geojson, load_shelters
-from app.services.routing import load_route_specs
+from app.services.route_service import load_route_specs
 
 
 def main() -> None:
