@@ -2,7 +2,7 @@ import rasterio
 import matplotlib.pyplot as plt
 
 # path = r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\sujigu_felt_temp.tif"
-path = r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\sujigu_heat_grade.tif"
+path = r"/data/sujigu_heat_grade.tif"
 
 with rasterio.open(path) as src:
     print("좌표계:", src.crs)

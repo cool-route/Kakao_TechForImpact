@@ -2,11 +2,11 @@ import geopandas as gpd
 import rasterio
 
 nodes = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\sujiku_nodes_5186.geojson"
+    r"/sujiku_nodes_5186.geojson"
 )
 
 with rasterio.open(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\sujigu_felt_temp.tif"
+        r"/data/sujigu_felt_temp.tif"
 ) as src:
 
     values = []

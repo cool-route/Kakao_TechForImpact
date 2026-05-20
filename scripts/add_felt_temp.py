@@ -4,12 +4,12 @@ import numpy as np
 
 # 노드 읽기
 nodes = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\sujiku_nodes_5186.geojson"
+    r"/scripts/sujiku_nodes_5186.geojson"
 )
 
 # tif 열기
 with rasterio.open(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\sujigu_felt_temp.tif"
+        r"/data/sujigu_felt_temp.tif"
 ) as src:
 
     band = src.read(1)

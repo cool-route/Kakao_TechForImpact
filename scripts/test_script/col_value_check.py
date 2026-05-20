@@ -1,7 +1,7 @@
 import geopandas as gpd
 
 land = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\land_sujigu_5186.geojson",
+    r"/data/land_sujigu_5186.geojson",
     encoding="cp949"
 )
 

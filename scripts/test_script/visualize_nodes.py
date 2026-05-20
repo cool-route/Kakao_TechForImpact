@@ -7,11 +7,11 @@ import numpy as np
 # =========================================
 
 nodes = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\nodes_with_score.geojson"
+    r"/nodes_with_score.geojson"
 )
 
 edges = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\sujiku_edges_5186.geojson"
+    r"/sujiku_edges_5186.geojson"
 )
 
 # =========================================

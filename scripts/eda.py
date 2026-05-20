@@ -1,7 +1,7 @@
 import geopandas as gpd
 
 gdf = gpd.read_file(
-    r"/data/output/nodes_with_utci.geojson"
+    r"../data/output/nodes_with_utci.geojson"
 )
 
 print(gdf["utci"].describe())

@@ -8,7 +8,7 @@ nodes = gpd.read_file(
 
 # 토지 데이터 읽기
 land = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\land_sujigu_5186.geojson",
+    r"/data/land_sujigu_5186.geojson",
     encoding="utf-8"
 )
 
