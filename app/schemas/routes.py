@@ -6,6 +6,14 @@ from pydantic import BaseModel, Field
 Mode = Literal["노약자"]
 
 
+class ShelterResponse(BaseModel):
+    name: str = Field(..., description="쉼터 이름")
+    lat: float = Field(..., description="위도")
+    lng: float = Field(..., description="경도")
+    address: str = Field(..., description="주소")
+    operating_hours: str = Field(..., description="운영시간 (예: 09:00-18:00)")
+
+
 class RouteRequest(BaseModel):
     mode: Mode = Field(..., description="이동 모드: 노약자")
     start: tuple[float, float] = Field(..., description="출발지 [lat, lng] — 예: [37.3219, 127.0972]")

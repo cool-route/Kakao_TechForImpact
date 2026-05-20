@@ -2,8 +2,8 @@ import networkx as nx
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import MODES
-from app.schemas.routes import Mode, RecommendedRouteResponse, RouteRequest, RouteResponse
-from app.services.route_service import get_recommended_routes, shortest_cool_route
+from app.schemas.routes import Mode, RecommendedRouteResponse, RouteRequest, RouteResponse, ShelterResponse
+from app.services.route_service import get_all_shelters, get_recommended_routes, shortest_cool_route
 
 
 router = APIRouter(tags=["routes"])
@@ -28,6 +28,16 @@ def create_route(request: RouteRequest) -> dict:
         raise HTTPException(status_code=404, detail="No route found for the requested coordinates") from exc
     except nx.NodeNotFound as exc:
         raise HTTPException(status_code=404, detail="Nearest graph node was not found") from exc
+
+
+@router.get(
+    "/shelters",
+    summary="무더위쉼터 목록 조회",
+    description="수지구 내 무더위쉼터 전체 목록을 반환합니다. 지도 마커 표시에 사용합니다.",
+    response_model=list[ShelterResponse],
+)
+def list_shelters() -> list[dict]:
+    return get_all_shelters()
 
 
 @router.get(

@@ -4,8 +4,9 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
-from app.core.config import MODES, ROUTE_SPECS_PATH
+from app.core.config import MODES, ROUTE_SPECS_PATH, SHELTERS_PATH
 from app.services.geo import Coordinate
+from app.services.geojson_loader import load_shelters
 from app.services.graph_loader import clear_graph_cache, load_route_graph
 from app.services.pathfinder import nearest_node, pairwise, shortest_path_for_mode
 from app.services.route_geojson import to_feature_collection, unique_shelters
@@ -64,6 +65,10 @@ def get_recommended_routes(mode: str | None = None) -> list[dict]:
         )
     _recommended_routes_cache[cache_key] = routes
     return deepcopy(routes)
+
+
+def get_all_shelters() -> list[dict]:
+    return load_shelters(SHELTERS_PATH)
 
 
 def clear_route_caches() -> None:
