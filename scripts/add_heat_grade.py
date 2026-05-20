@@ -7,7 +7,7 @@ nodes = gpd.read_file(
 )
 
 with rasterio.open(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\sujigu_heat_grade.tif"
+        r"/data/sujigu_heat_grade.tif"
 ) as src:
 
     band = src.read(1)

@@ -1,7 +1,7 @@
 import geopandas as gpd
 
 gdf = gpd.read_file(
-    r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\output\nodes_with_utci.geojson"
+    r"/data/output/nodes_with_utci.geojson"
 )
 
 # 더미 데이터

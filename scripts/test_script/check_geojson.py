@@ -1,6 +1,6 @@
 import geopandas as gpd
 
-gdf = gpd.read_file(r"C:\Users\kjenn\PyCharm_files\cool-route-data\data\land_sujigu.geojson")
+gdf = gpd.read_file(r"/data/land_sujigu.geojson")
 
 print(gdf.head())
 print()
