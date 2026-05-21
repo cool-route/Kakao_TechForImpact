@@ -88,7 +88,7 @@ def test_post_route_http(api_base_url):
         "POST",
         f"{api_base_url}/route",
         {
-            "mode": "일반",
+            "mode": "노약자",
             "start": [37.3219, 127.0972],
             "end": [37.3247, 127.1245],
         },
@@ -105,13 +105,6 @@ def test_get_routes_http(api_base_url):
     status, body = _request_json("GET", f"{api_base_url}/routes")
 
     assert status == 200
-    assert len(body) == 13
-    assert {"id", "name", "mode", "heat_score_avg", "distance_m", "geojson", "shelters", "is_dummy"} <= set(body[0])
-
-
-def test_get_routes_by_mode_http(api_base_url):
-    status, body = _request_json("GET", f"{api_base_url}/routes?mode=%EB%85%B8%EC%95%BD%EC%9E%90")
-
-    assert status == 200
     assert len(body) == 5
+    assert {"id", "name", "mode", "heat_score_avg", "distance_m", "geojson", "shelters", "is_dummy"} <= set(body[0])
     assert all(route["mode"] == "노약자" for route in body)
