@@ -1,12 +1,43 @@
+from pathlib import Path
+
 import geopandas as gpd
 import numpy as np
 import json
 
 # ====================================
+# 경로 설정
+# ====================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+preset_path = (
+    BASE_DIR
+    / "data"
+    / "presets.json"
+)
+
+nodes_path = (
+    BASE_DIR
+    / "data"
+    / "nodes_with_shade.geojson"
+)
+
+output_path = (
+    BASE_DIR
+    / "data"
+    / "nodes_with_score.geojson"
+)
+
+# ====================================
 # 1. presets 불러오기
 # ====================================
 
-with open("presets.json", "r", encoding="utf-8") as f:
+with open(
+    preset_path,
+    "r",
+    encoding="utf-8"
+) as f:
+
     presets = json.load(f)
 
 # 현재 사용할 모드
@@ -18,9 +49,7 @@ p = presets[MODE]
 # 2. 파일 읽기
 # ====================================
 
-nodes = gpd.read_file(
-    "nodes_with_shade.geojson"
-)
+nodes = gpd.read_file(nodes_path)
 
 # ====================================
 # 3. 결측값 처리
@@ -50,6 +79,7 @@ nodes["shade"] = (
 # ====================================
 
 nodes["heat_score"] = (
+
     p["felt_temp_weight"]
     *
     nodes["felt_temp"]
@@ -65,6 +95,7 @@ nodes["heat_score"] = (
     p["shade_weight"]
     *
     nodes["shade"]
+
 )
 
 # ====================================
@@ -102,18 +133,36 @@ print()
 print("Heat Score 통계")
 
 print(
-    nodes["heat_score"].describe()
+    nodes["heat_score"]
+    .describe()
+)
+
+print()
+
+print("최소값:")
+print(
+    nodes["heat_score"]
+    .min()
+)
+
+print()
+
+print("최대값:")
+print(
+    nodes["heat_score"]
+    .max()
 )
 
 # ====================================
-# 7. 저장 ⭐⭐⭐
+# 7. 저장
 # ====================================
 
 nodes.to_file(
-    "nodes_with_score.geojson",
+    output_path,
     driver="GeoJSON"
 )
 
 print()
 
 print("nodes_with_score.geojson 저장 완료")
+print(output_path)
