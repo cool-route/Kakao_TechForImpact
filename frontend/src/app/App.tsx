@@ -3,7 +3,6 @@ import { MainScreen } from './components/MainScreen';
 import { RouteListScreen } from './components/RouteListScreen';
 import type { RouteInfo } from './components/RouteListScreen';
 import { MapDetailScreen } from './components/MapDetailScreen';
-import { Key, Eye, EyeOff } from 'lucide-react';
 
 type AppScreen = 'main' | 'routeList' | 'mapDetail';
 
@@ -11,9 +10,7 @@ export default function App() {
   const [screen, setScreen] = useState<AppScreen>('main');
   const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
   const [mode, setMode] = useState<'general' | 'elderly' | 'dog'>('general');
-  const [kakaoApiKey, setKakaoApiKey] = useState('');
-  const [showApiInput, setShowApiInput] = useState(false);
-  const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
   return (
     <div
@@ -26,59 +23,6 @@ export default function App() {
           🌿 쿨워크 CoolWalk
         </h1>
         <p className="text-white/70" style={{ fontSize: '13px', marginTop: '2px' }}>기후 기반 도보 내비게이션</p>
-      </div>
-
-      {/* API Key section */}
-      <div className="flex flex-col items-center gap-2 w-full max-w-[390px]">
-        <button
-          onClick={() => setShowApiInput(v => !v)}
-          className="flex items-center gap-2 rounded-xl px-4 py-2 transition-all active:scale-95"
-          style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
-        >
-          <Key size={14} color="white" />
-          <span style={{ fontSize: '13px', color: 'white', fontWeight: '500' }}>
-            카카오맵 API 키 {kakaoApiKey ? '✅ 설정됨' : '설정하기'}
-          </span>
-        </button>
-
-        {showApiInput && (
-          <div
-            className="w-full rounded-2xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)' }}
-          >
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.6' }}>
-              카카오 개발자 센터(developers.kakao.com)에서 발급받은<br />
-              JavaScript 앱 키를 입력하세요.
-            </p>
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.9)' }}>
-                <input
-                  type={apiKeyVisible ? 'text' : 'password'}
-                  placeholder="카카오맵 JavaScript API 키"
-                  value={kakaoApiKey}
-                  onChange={e => setKakaoApiKey(e.target.value)}
-                  className="flex-1 outline-none bg-transparent"
-                  style={{ fontSize: '13px', color: '#1A3A5C' }}
-                />
-                <button onClick={() => setApiKeyVisible(v => !v)} className="opacity-50 hover:opacity-100 transition-opacity">
-                  {apiKeyVisible ? <EyeOff size={14} color="#1A3A5C" /> : <Eye size={14} color="#1A3A5C" />}
-                </button>
-              </div>
-              <button
-                onClick={() => setShowApiInput(false)}
-                className="rounded-xl px-4 py-2.5 transition-all active:scale-95"
-                style={{ background: 'rgba(255,255,255,0.9)', fontSize: '13px', fontWeight: '700', color: '#4A90D9' }}
-              >
-                확인
-              </button>
-            </div>
-            {!kakaoApiKey && (
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
-                ℹ️ API 키 없이도 모의 지도로 앱을 체험할 수 있습니다.
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Phone frame */}

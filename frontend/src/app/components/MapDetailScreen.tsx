@@ -142,12 +142,24 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
   useEffect(() => {
     if (!apiKey || !mapRef.current) return;
 
+    // ensure container has explicit size for Kakao Maps
+    if (mapRef.current) {
+      mapRef.current.style.width = '100%';
+      mapRef.current.style.height = '100%';
+    }
+
     const existingScript = document.querySelector(`script[src*="dapi.kakao.com"]`);
 
     function initMap() {
       if (!mapRef.current) return;
+      if (!window.kakao || !window.kakao.maps || !window.kakao.maps.load) {
+        console.error('Kakao Maps SDK not available after script load');
+        return;
+      }
+      console.log('Kakao Maps SDK loaded, initializing map');
       window.kakao.maps.load(() => {
         const center = new window.kakao.maps.LatLng(37.3165, 127.0850);
+        // const center = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
         const map = new window.kakao.maps.Map(mapRef.current!, { center, level: 5 });
         mapInstanceRef.current = map;
 
@@ -179,15 +191,17 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
         // Start/End markers
         const startPos = new window.kakao.maps.LatLng(37.3220, 127.0960);
         const endPos = new window.kakao.maps.LatLng(37.3110, 127.0760);
-        const startContent = `<div style="background:#4A90D9;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">출</div>`;
-        const endContent = `<div style="background:#E74C3C;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">도</div>`;
+        // const startPos = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
+        // const endPos = new window.kakao.maps.LatLng(route.end[0], route.end[1]);
+        const startContent = `<div style="background:#4A90D9;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚶‍♂️</div>`;
+        const endContent = `<div style="background:#E74C3C;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚩</div>`;
         overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: startPos, content: startContent, map, yAnchor: 1 }));
         overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: endPos, content: endContent, map, yAnchor: 1 }));
       });
     }
 
     if (existingScript) {
-      if (window.kakao?.maps) {
+      if ((window as any).kakao?.maps) {
         initMap();
       } else {
         existingScript.addEventListener('load', initMap);
@@ -196,10 +210,13 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
     }
 
     const script = document.createElement('script');
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false`;
-    script.onload = initMap;
-    script.onerror = () => console.error('Kakao Maps 로드 실패. API 키를 확인해주세요.');
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false`;
+    script.async = true;
+    script.defer = true;
+    script.addEventListener('load', initMap);
+    script.addEventListener('error', () => console.error('Kakao Maps 로드 실패. API 키를 확인해주세요.'));
     document.head.appendChild(script);
+    // keep script in DOM so other components can reuse SDK
   }, [apiKey]);
 
   return <div ref={mapRef} className="w-full h-full" />;
