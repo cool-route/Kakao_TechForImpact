@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
 from app.models.db import get_connection, init_db
-from app.services.routing import get_recommended_routes
+from app.services.route_service import get_recommended_routes
 
 
 def seed_routes() -> int:

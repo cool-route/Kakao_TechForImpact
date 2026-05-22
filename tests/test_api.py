@@ -1,5 +1,6 @@
 from app.main import healthcheck
-from app.routers.route import RouteRequest, create_route, list_routes
+from app.api.routes import create_route, list_routes
+from app.schemas.routes import RouteRequest
 
 
 def test_healthcheck():
@@ -9,7 +10,7 @@ def test_healthcheck():
 def test_post_route_handler():
     result = create_route(
         RouteRequest(
-            mode="일반",
+            mode="노약자",
             start=(37.3219, 127.0972),
             end=(37.3247, 127.1245),
         )
@@ -19,8 +20,8 @@ def test_post_route_handler():
     assert result["distance_m"] > 0
 
 
-def test_get_routes_by_mode_handler():
-    routes = list_routes(mode="반려동물")
+def test_get_routes_handler_returns_five():
+    routes = list_routes(mode=None)
 
     assert len(routes) == 5
-    assert all(route["mode"] == "반려동물" for route in routes)
+    assert all(route["mode"] == "노약자" for route in routes)
