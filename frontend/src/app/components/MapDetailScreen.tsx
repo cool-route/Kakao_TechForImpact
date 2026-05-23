@@ -31,23 +31,12 @@ interface KakaoSize {}
 interface KakaoOverlayOptions { position: KakaoLatLng; content: string; map: KakaoMap; yAnchor?: number; }
 interface KakaoCustomOverlay { setMap: (map: KakaoMap | null) => void; }
 
-// Route coordinates for 수지구 area (광교산 그늘길 approximation)
-const ROUTE_SEGMENTS = [
-  // Segment 1: Cool (blue)
-  { color: '#4A90D9', coords: [[37.3220, 127.0960], [37.3210, 127.0930], [37.3195, 127.0900]] },
-  // Segment 2: Comfortable (green)
-  { color: '#5DB87C', coords: [[37.3195, 127.0900], [37.3180, 127.0875], [37.3165, 127.0850]] },
-  // Segment 3: Warm (orange)
-  { color: '#F5A623', coords: [[37.3165, 127.0850], [37.3150, 127.0820], [37.3140, 127.0800]] },
-  // Segment 4: Cool again (blue)
-  { color: '#4A90D9', coords: [[37.3140, 127.0800], [37.3125, 127.0780], [37.3110, 127.0760]] },
-];
-
-const SHELTER_MARKERS = [
-  { lat: 37.3175, lng: 127.0870, name: '수지구청 무더위쉼터' },
-  { lat: 37.3145, lng: 127.0815, name: '광교산 입구 쉼터' },
-  { lat: 37.3120, lng: 127.0770, name: '근린공원 쉼터' },
-];
+function heatScoreToColor(heatScore: number): string {
+  if (heatScore < 20) return '#4A90D9';
+  if (heatScore < 22) return '#5DB87C';
+  if (heatScore < 24) return '#F5A623';
+  return '#E74C3C';
+}
 
 function MockMap({ route }: { route: RouteInfo }) {
   return (
@@ -158,21 +147,23 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
       }
       console.log('Kakao Maps SDK loaded, initializing map');
       window.kakao.maps.load(() => {
-        const center = new window.kakao.maps.LatLng(37.3165, 127.0850);
-        // const center = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
+        const center = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
         const map = new window.kakao.maps.Map(mapRef.current!, { center, level: 5 });
         mapInstanceRef.current = map;
 
-        overlaysRef.current.forEach(o => o.setMap(null));
+        overlaysRef.current.forEach((o: KakaoPolyline | KakaoMarker | KakaoCustomOverlay) => o.setMap(null));
         overlaysRef.current = [];
 
-        // Draw route segments
-        ROUTE_SEGMENTS.forEach(seg => {
-          const path = seg.coords.map(([lat, lng]) => new window.kakao.maps.LatLng(lat, lng));
+        // Draw route from geojson (each feature colored by heat_score)
+        (route.geojson?.features ?? []).forEach((feature: any) => {
+          const heatScore = feature.properties?.heat_score ?? 22;
+          const path = feature.geometry.coordinates.map(([lng, lat]: [number, number]) =>
+            new window.kakao.maps.LatLng(lat, lng)
+          );
           const polyline = new window.kakao.maps.Polyline({
             path,
             strokeWeight: 7,
-            strokeColor: seg.color,
+            strokeColor: heatScoreToColor(heatScore),
             strokeOpacity: 0.9,
             strokeStyle: 'solid',
           });
@@ -180,8 +171,8 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
           overlaysRef.current.push(polyline);
         });
 
-        // Shelter markers
-        SHELTER_MARKERS.forEach(shelter => {
+        // Shelter markers from real data
+        (route.shelters ?? []).forEach((shelter: any) => {
           const position = new window.kakao.maps.LatLng(shelter.lat, shelter.lng);
           const content = `<div style="background:#FFD700;border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.2)">🏠</div>`;
           const overlay = new window.kakao.maps.CustomOverlay({ position, content, map, yAnchor: 1 });
@@ -189,10 +180,8 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
         });
 
         // Start/End markers
-        const startPos = new window.kakao.maps.LatLng(37.3220, 127.0960);
-        const endPos = new window.kakao.maps.LatLng(37.3110, 127.0760);
-        // const startPos = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
-        // const endPos = new window.kakao.maps.LatLng(route.end[0], route.end[1]);
+        const startPos = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
+        const endPos = new window.kakao.maps.LatLng(route.end[0], route.end[1]);
         const startContent = `<div style="background:#4A90D9;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚶‍♂️</div>`;
         const endContent = `<div style="background:#E74C3C;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚩</div>`;
         overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: startPos, content: startContent, map, yAnchor: 1 }));
@@ -231,11 +220,16 @@ interface MapDetailScreenProps {
 export function MapDetailScreen({ route, onBack, kakaoApiKey }: MapDetailScreenProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
 
+  const features = route.geojson?.features ?? [];
+  const avgTemp = features.length > 0
+    ? features.reduce((s: number, f: any) => s + (f.properties?.temperature ?? 0), 0) / features.length
+    : null;
+
   const weatherStats = [
-    { icon: <Thermometer size={16} color="#E74C3C" />, label: '체감 온도', value: '33.2°C', sub: '실제보다 4.6°C 높음', color: '#FFE8E8' },
-    { icon: <Sun size={16} color="#F5A623" />, label: '지면 온도', value: '41.5°C', sub: '아스팔트 노출 최소화', color: '#FFF5E8' },
-    { icon: <TreePine size={16} color="#5DB87C" />, label: '그림자 비율', value: `${route.shadeRatio}%`, sub: '경로의 대부분이 그늘', color: '#E8F8EF' },
-    { icon: <Wind size={16} color="#4A90D9" />, label: '풍속', value: '2.3 m/s', sub: '약한 바람, 체감 쾌적', color: '#E8F4FF' },
+    { icon: <Thermometer size={16} color="#E74C3C" />, label: '체감 온도', value: avgTemp ? `${avgTemp.toFixed(1)}°C` : '--', sub: '경로 평균 체감온도', color: '#FFE8E8' },
+    { icon: <Sun size={16} color="#F5A623" />, label: '열 지수', value: `${route.heatScore}점`, sub: '낮을수록 시원한 경로', color: '#FFF5E8' },
+    { icon: <TreePine size={16} color="#5DB87C" />, label: '그림자 비율', value: `${route.shadeRatio}%`, sub: '경로의 그늘 구간 비율', color: '#E8F8EF' },
+    { icon: <Wind size={16} color="#4A90D9" />, label: '쉼터', value: `${route.shelters?.length ?? 0}개`, sub: '경로 내 무더위쉼터', color: '#E8F4FF' },
   ];
 
   return (
@@ -271,7 +265,7 @@ export function MapDetailScreen({ route, onBack, kakaoApiKey }: MapDetailScreenP
       <div className="relative z-10 mx-4">
         <div className="rounded-xl px-3 py-2 flex items-center gap-2 w-fit" style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <span style={{ fontSize: '14px' }}>🏠</span>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: '#7B5800' }}>무더위 쉼터 {SHELTER_MARKERS.length}개</span>
+          <span style={{ fontSize: '12px', fontWeight: '600', color: '#7B5800' }}>무더위 쉼터 {route.shelters?.length ?? 0}개</span>
         </div>
       </div>
 

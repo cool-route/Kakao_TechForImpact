@@ -12,45 +12,12 @@ export interface RouteInfo {
   tags: string[];
   color: string;
   difficulty: string;
-  // API 연동을 위해 추가된 속성 (실제 경로 그릴 때 사용)
   mode: 'general' | 'elderly' | 'dog';
   start: [number, number];
   end: [number, number];
+  geojson: any;
+  shelters: Array<{ name: string; lat: number; lng: number; operating_hours: string }>;
 }
-
-// 테스트용 하드코딩 샘플 데이터
-export const SAMPLE_ROUTES: RouteInfo[] = [
-  {
-    id: 991,
-    name: '수지구청 ↔ 죽전역 테스트 경로',
-    subtitle: '일반 맞춤 경로 (테스트)',
-    heatScore: 85,
-    distance: '2.5km',
-    duration: '38분',
-    shadeRatio: 72,
-    tags: ['테스트', '그늘 우선'],
-    color: '#4A90D9',
-    difficulty: '보통',
-    mode: 'general',
-    start: [37.3219, 127.0972], // 수지구청
-    end: [37.3247, 127.1245]    // 죽전역
-  },
-  {
-    id: 992,
-    name: '광교산 입구 쉼터 경로',
-    subtitle: '노약자 맞춤 경로 (테스트)',
-    heatScore: 92,
-    distance: '1.2km',
-    duration: '18분',
-    shadeRatio: 88,
-    tags: ['쉼터 경유', '매우 쾌적'],
-    color: '#5DB87C',
-    difficulty: '쉬움',
-    mode: 'elderly',
-    start: [37.3165, 127.0850], // 광교산 부근 임시 출발지
-    end: [37.3110, 127.0760]    // 근린공원 부근 도착지
-  }
-];
 
 
 type FilterType = '전체' | '그늘 우선' | '쉼터 우선' | '지면온도 우선' | '바람 우선';
@@ -149,62 +116,60 @@ interface RouteListScreenProps {
 }
 
 const modeLabel: Record<string, string> = { general: '일반 모드', elderly: '노약자 모드', dog: '강아지 산책 모드' };
-// 백엔드의 한글 모드명 맵핑을 위한 객체
-const apiModeQuery: Record<string, string> = { general: '일반', elderly: '노약자', dog: '반려동물' };
 const modeEmoji: Record<string, string> = { general: '🚶', elderly: '🧓', dog: '🐕' };
+const routeColor: Record<string, string> = { general: '#4A90D9', elderly: '#5DB87C', dog: '#9B59B6' };
 
 export function RouteListScreen({ onBack, onSelectRoute, mode }: RouteListScreenProps) {
   const [filter, setFilter] = useState<FilterType>('전체');
-  // ✅ 추가: API에서 받아올 경로 상태와 로딩 상태 관리
-  // const [routes, setRoutes] = useState<RouteInfo[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
-  // 테스트용 (위 아래 둘 중 하나만 사용할 것. 테스트일 경우 useEffect 주석 처리)
-  const [routes, setRoutes] = useState<RouteInfo[]>(SAMPLE_ROUTES); 
-  const [isLoading, setIsLoading] = useState(false);
+  const [routes, setRoutes] = useState<RouteInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ 추가: 화면 로드 시 백엔드 API(GET /routes) 호출
-  // useEffect(() => {
-  //   const fetchRoutes = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       // 백엔드가 인식할 수 있는 한글 모드명(일반, 노약자, 반려동물)으로 쿼리 스트링 구성
-  //       const targetMode = apiModeQuery[mode];
-  //       const res = await fetch(`http://127.0.0.1:8000/routes?mode=${targetMode}`);
-        
-  //       if (res.ok) {
-  //         const data = await res.json();
-          
-  //         // API 응답 데이터를 프론트엔드 UI(RouteInfo) 구조에 맞게 변환 (매핑)
-  //         const formattedRoutes = data.map((item: any, index: number) => ({
-  //           id: item.id,
-  //           name: item.name,
-  //           subtitle: `${item.mode} 맞춤 경로`,
-  //           heatScore: Math.round(item.heat_score_avg * 100), // 점수 스케일링 임시 처리
-  //           distance: `${(item.distance_m / 1000).toFixed(1)}km`,
-  //           duration: `${Math.round(item.distance_m / 1000 * 15)}분`, // 임시 소요시간 추정
-  //           shadeRatio: 65, // 백엔드에서 shade_ratio가 오면 갱신
-  //           tags: item.shelters && item.shelters.length > 0 ? ['쉼터 경유'] : ['기본 경로'],
-  //           color: mode === 'elderly' ? '#5DB87C' : mode === 'dog' ? '#9B59B6' : '#4A90D9',
-  //           difficulty: '보통',
-  //           // 지도 렌더링(MapDetailScreen)으로 넘겨주기 위한 필수 데이터
-  //           mode: mode,
-  //           start: item.geojson.coordinates[0].reverse(), // GeoJSON(Lng,Lat) -> 지도(Lat,Lng)
-  //           end: item.geojson.coordinates[item.geojson.coordinates.length - 1].reverse()
-  //         }));
-          
-  //         setRoutes(formattedRoutes);
-  //       } else {
-  //         console.error('Failed to fetch route list:', res.status);
-  //       }
-  //     } catch (err) {
-  //       console.error('Network Error:', err);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchRoutes();
-  // }, [mode]); // 모드가 변경될 때마다 새로 호출
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch('/routes');
+        if (res.ok) {
+          const data = await res.json();
+          const formattedRoutes = data.map((item: any) => {
+            const features = item.geojson?.features ?? [];
+            const avgShadeRatio = features.length > 0
+              ? features.reduce((s: number, f: any) => s + (f.properties?.shade_ratio ?? 0), 0) / features.length
+              : 0;
+            const firstCoord = features[0]?.geometry?.coordinates?.[0] ?? [127.1, 37.33];
+            const lastFeature = features[features.length - 1];
+            const lastCoords = lastFeature?.geometry?.coordinates ?? [[127.1, 37.33]];
+            const lastCoord = lastCoords[lastCoords.length - 1];
+            return {
+              id: item.id,
+              name: item.name,
+              subtitle: `${item.mode} 맞춤 경로`,
+              heatScore: Math.round(Math.max(0, Math.min(100, 90 - (item.heat_score_avg - 19) * 5))),
+              distance: `${(item.distance_m / 1000).toFixed(1)}km`,
+              duration: `${Math.round(item.distance_m / 1000 * 15)}분`,
+              shadeRatio: Math.round(avgShadeRatio * 100),
+              tags: item.shelters?.length > 0 ? ['쉼터 경유'] : ['기본 경로'],
+              color: routeColor[mode] ?? '#4A90D9',
+              difficulty: '보통',
+              mode,
+              start: [firstCoord[1], firstCoord[0]] as [number, number],
+              end: [lastCoord[1], lastCoord[0]] as [number, number],
+              geojson: item.geojson,
+              shelters: item.shelters ?? [],
+            };
+          });
+          setRoutes(formattedRoutes);
+        } else {
+          console.error('경로 목록 조회 실패:', res.status);
+        }
+      } catch (err) {
+        console.error('네트워크 오류:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRoutes();
+  }, [mode]);
 
   // 필터 적용 로직
   const filtered = filter === '전체' ? routes : routes.filter(r => r.tags.includes(filter));
