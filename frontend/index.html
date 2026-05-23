@@ -1,0 +1,22 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Climate-based Navigation App</title>
+      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
+    </head>
+
+    <body>
+      <div id="root"></div>
+      <script type="module" src="/src/main.tsx"></script>
+    </body>
+
+    <div class="healthcheck-box" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+      <h4>⚙️ 서버 연동 테스트</h4>
+      <button id="healthcheck-btn" style="padding: 8px 16px; cursor: pointer;">서버 상태 확인</button>
+      <p>응답 결과: <span id="healthcheck-result" style="font-weight: bold; color: #007bff;">대기 중...</span></p>
+    </div>
+  </html>
+  

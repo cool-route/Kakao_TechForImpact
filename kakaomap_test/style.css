@@ -1,0 +1,28 @@
+/* 화면 전체 여백 제거 및 크기 고정 */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* 스크롤바 방지 */
+}
+
+/* 지도 영역을 화면 전체 크기로 설정 */
+#map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.app-container { max-width: 480px; margin: 0 auto; padding: 20px; font-family: sans-serif; }
+.mode-filters { display: flex; gap: 10px; margin-bottom: 20px; }
+.mode-filters button { flex: 1; padding: 10px; border: 1px solid #ddd; background-color: white; border-radius: 8px; cursor: pointer; }
+.mode-filters button.active { background-color: #007bff; color: white; border-color: #007bff; }
+.route-card { border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.route-card h3 { margin: 0 0 10px 0; font-size: 1.1rem; }
+.badge { display: inline-block; background-color: #e9ecef; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 10px; }
+.select-btn { display: block; width: 100%; padding: 10px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; }
+.select-btn:hover { background-color: #e2e6ea; }
+#bottom-sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); box-sizing: border-box; }
+.sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.sheet-header h4 { margin: 0; }
+.sheet-header button { background: none; border: none; font-size: 1.2rem; cursor: pointer; }

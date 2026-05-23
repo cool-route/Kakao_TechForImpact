@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.models.db import init_db
 from app.api.routes import router as route_router
@@ -23,7 +24,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -35,3 +36,6 @@ def healthcheck() -> dict[str, str]:
 
 
 app.include_router(route_router)
+
+app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
+# app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")
