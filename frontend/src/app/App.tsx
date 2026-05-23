@@ -5,12 +5,35 @@ import type { RouteInfo } from './components/RouteListScreen';
 import { MapDetailScreen } from './components/MapDetailScreen';
 
 type AppScreen = 'main' | 'routeList' | 'mapDetail';
+// healthcheck api
+type HealthStatus = {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  message: string;
+};
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>('main');
   const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
   const [mode, setMode] = useState<'general' | 'elderly' | 'dog'>('general');
   const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
+
+  // heathcheck api
+  const [healthStatus, setHealthStatus] = useState<HealthStatus>({ status: 'idle', message: '대기 중...' });
+  const checkServerHealth = async () => {
+    setHealthStatus({ status: 'loading', message: '요청 중...' });
+    try {
+      const res = await fetch('http://127.0.0.1:8000/healthcheck');
+      if (res.ok) {
+        const data = await res.json();
+        setHealthStatus({ status: 'success', message: `✅ 성공! 백엔드 상태: ${data.status}` });
+      } else {
+        setHealthStatus({ status: 'error', message: `❌ HTTP 에러: ${res.status}` });
+      }
+    } catch (err) {
+      setHealthStatus({ status: 'error', message: '⚠️ 연결 실패 (서버가 켜져 있는지 확인하세요)' });
+      console.error('Healthcheck Error:', err);
+    }
+  };
 
   return (
     <div
@@ -23,6 +46,31 @@ export default function App() {
           🌿 쿨워크 CoolWalk
         </h1>
         <p className="text-white/70" style={{ fontSize: '13px', marginTop: '2px' }}>기후 기반 도보 내비게이션</p>
+      </div>
+
+      {/* healthcheck api ui */}
+      <div className="flex flex-col items-center gap-2 mb-2 w-full max-w-[390px]">
+        <button
+          onClick={checkServerHealth}
+          className="flex items-center gap-2 rounded-xl px-4 py-2 transition-all active:scale-95"
+          style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)' }}
+        >
+          <span style={{ fontSize: '13px', color: 'white', fontWeight: '600' }}>
+            ⚙️ 백엔드 연동 테스트
+          </span>
+        </button>
+        {healthStatus.status !== 'idle' && (
+          <div 
+            style={{ 
+              fontSize: '12px', 
+              fontWeight: '600',
+              color: healthStatus.status === 'success' ? '#A7F3D0' : healthStatus.status === 'error' ? '#FECACA' : '#FDE68A',
+              textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+            }}
+          >
+            {healthStatus.message}
+          </div>
+        )}
       </div>
 
       {/* Phone frame */}

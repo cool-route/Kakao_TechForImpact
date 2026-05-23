@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Flame, Clock, MapPin, Star, ChevronRight, TreePine, Umbrella, Thermometer, Wind } from 'lucide-react';
 
 export interface RouteInfo {
@@ -12,70 +12,46 @@ export interface RouteInfo {
   tags: string[];
   color: string;
   difficulty: string;
+  // API 연동을 위해 추가된 속성 (실제 경로 그릴 때 사용)
+  mode: 'general' | 'elderly' | 'dog';
+  start: [number, number];
+  end: [number, number];
 }
 
-const ROUTES: RouteInfo[] = [
+// 테스트용 하드코딩 샘플 데이터
+export const SAMPLE_ROUTES: RouteInfo[] = [
   {
-    id: 1,
-    name: '광교산 그늘길',
-    subtitle: '숲 터널 코스 · 수지구청 출발',
-    heatScore: 92,
-    distance: '2.3km',
-    duration: '35분',
-    shadeRatio: 84,
-    tags: ['그늘 우선', '자연'],
+    id: 991,
+    name: '수지구청 ↔ 죽전역 테스트 경로',
+    subtitle: '일반 맞춤 경로 (테스트)',
+    heatScore: 85,
+    distance: '2.5km',
+    duration: '38분',
+    shadeRatio: 72,
+    tags: ['테스트', '그늘 우선'],
     color: '#4A90D9',
-    difficulty: '쉬움',
+    difficulty: '보통',
+    mode: 'general',
+    start: [37.3219, 127.0972], // 수지구청
+    end: [37.3247, 127.1245]    // 죽전역
   },
   {
-    id: 2,
-    name: '탄천 수변로',
-    subtitle: '하천변 바람길 · 정자역 출발',
-    heatScore: 78,
-    distance: '1.8km',
-    duration: '27분',
-    shadeRatio: 52,
-    tags: ['쉼터 우선', '바람'],
-    color: '#5DB87C',
-    difficulty: '쉬움',
-  },
-  {
-    id: 3,
-    name: '죽전 근린공원길',
-    subtitle: '지면 온도 낮은 공원 산책로',
-    heatScore: 71,
+    id: 992,
+    name: '광교산 입구 쉼터 경로',
+    subtitle: '노약자 맞춤 경로 (테스트)',
+    heatScore: 92,
     distance: '1.2km',
     duration: '18분',
-    shadeRatio: 61,
-    tags: ['지면온도 우선'],
-    color: '#9B59B6',
+    shadeRatio: 88,
+    tags: ['쉼터 경유', '매우 쾌적'],
+    color: '#5DB87C',
     difficulty: '쉬움',
-  },
-  {
-    id: 4,
-    name: '수지 미금 하천길',
-    subtitle: '미금역 ~ 수지구청 수변 코스',
-    heatScore: 65,
-    distance: '3.1km',
-    duration: '46분',
-    shadeRatio: 38,
-    tags: ['바람 우선'],
-    color: '#E67E22',
-    difficulty: '보통',
-  },
-  {
-    id: 5,
-    name: '광교호수공원 둘레길',
-    subtitle: '호숫가 바람, 벤치 쉼터 다수',
-    heatScore: 88,
-    distance: '4.2km',
-    duration: '62분',
-    shadeRatio: 70,
-    tags: ['쉼터 우선', '그늘 우선'],
-    color: '#2ECC71',
-    difficulty: '보통',
-  },
+    mode: 'elderly',
+    start: [37.3165, 127.0850], // 광교산 부근 임시 출발지
+    end: [37.3110, 127.0760]    // 근린공원 부근 도착지
+  }
 ];
+
 
 type FilterType = '전체' | '그늘 우선' | '쉼터 우선' | '지면온도 우선' | '바람 우선';
 const FILTERS: FilterType[] = ['전체', '그늘 우선', '쉼터 우선', '지면온도 우선', '바람 우선'];
@@ -173,12 +149,65 @@ interface RouteListScreenProps {
 }
 
 const modeLabel: Record<string, string> = { general: '일반 모드', elderly: '노약자 모드', dog: '강아지 산책 모드' };
+// 백엔드의 한글 모드명 맵핑을 위한 객체
+const apiModeQuery: Record<string, string> = { general: '일반', elderly: '노약자', dog: '반려동물' };
 const modeEmoji: Record<string, string> = { general: '🚶', elderly: '🧓', dog: '🐕' };
 
 export function RouteListScreen({ onBack, onSelectRoute, mode }: RouteListScreenProps) {
   const [filter, setFilter] = useState<FilterType>('전체');
+  // ✅ 추가: API에서 받아올 경로 상태와 로딩 상태 관리
+  // const [routes, setRoutes] = useState<RouteInfo[]>([]);
+  // const [isLoading, setIsLoading] = useState(true);
+  // 테스트용 (위 아래 둘 중 하나만 사용할 것. 테스트일 경우 useEffect 주석 처리)
+  const [routes, setRoutes] = useState<RouteInfo[]>(SAMPLE_ROUTES); 
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filtered = filter === '전체' ? ROUTES : ROUTES.filter(r => r.tags.includes(filter));
+  // ✅ 추가: 화면 로드 시 백엔드 API(GET /routes) 호출
+  // useEffect(() => {
+  //   const fetchRoutes = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       // 백엔드가 인식할 수 있는 한글 모드명(일반, 노약자, 반려동물)으로 쿼리 스트링 구성
+  //       const targetMode = apiModeQuery[mode];
+  //       const res = await fetch(`http://127.0.0.1:8000/routes?mode=${targetMode}`);
+        
+  //       if (res.ok) {
+  //         const data = await res.json();
+          
+  //         // API 응답 데이터를 프론트엔드 UI(RouteInfo) 구조에 맞게 변환 (매핑)
+  //         const formattedRoutes = data.map((item: any, index: number) => ({
+  //           id: item.id,
+  //           name: item.name,
+  //           subtitle: `${item.mode} 맞춤 경로`,
+  //           heatScore: Math.round(item.heat_score_avg * 100), // 점수 스케일링 임시 처리
+  //           distance: `${(item.distance_m / 1000).toFixed(1)}km`,
+  //           duration: `${Math.round(item.distance_m / 1000 * 15)}분`, // 임시 소요시간 추정
+  //           shadeRatio: 65, // 백엔드에서 shade_ratio가 오면 갱신
+  //           tags: item.shelters && item.shelters.length > 0 ? ['쉼터 경유'] : ['기본 경로'],
+  //           color: mode === 'elderly' ? '#5DB87C' : mode === 'dog' ? '#9B59B6' : '#4A90D9',
+  //           difficulty: '보통',
+  //           // 지도 렌더링(MapDetailScreen)으로 넘겨주기 위한 필수 데이터
+  //           mode: mode,
+  //           start: item.geojson.coordinates[0].reverse(), // GeoJSON(Lng,Lat) -> 지도(Lat,Lng)
+  //           end: item.geojson.coordinates[item.geojson.coordinates.length - 1].reverse()
+  //         }));
+          
+  //         setRoutes(formattedRoutes);
+  //       } else {
+  //         console.error('Failed to fetch route list:', res.status);
+  //       }
+  //     } catch (err) {
+  //       console.error('Network Error:', err);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   fetchRoutes();
+  // }, [mode]); // 모드가 변경될 때마다 새로 호출
+
+  // 필터 적용 로직
+  const filtered = filter === '전체' ? routes : routes.filter(r => r.tags.includes(filter));
 
   return (
     <div className="w-full h-full flex flex-col" style={{ background: '#F0F7FF' }}>
@@ -235,11 +264,22 @@ export function RouteListScreen({ onBack, onSelectRoute, mode }: RouteListScreen
         </div>
       </div>
 
-      {/* Route cards */}
+      {/* Route cards / Loading spinner */}
       <div className="flex-1 overflow-y-auto px-4 pb-6 flex flex-col gap-3" style={{ scrollbarWidth: 'none' }}>
-        {filtered.map(route => (
-          <RouteCard key={route.id} route={route} onSelect={() => onSelectRoute(route)} />
-        ))}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-500">
+            <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-sm font-bold">경로 데이터를 불러오는 중...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400">
+            <p className="font-bold">조건에 맞는 경로가 없습니다.</p>
+          </div>
+        ) : (
+          filtered.map(route => (
+            <RouteCard key={route.id} route={route} onSelect={() => onSelectRoute(route)} />
+          ))
+        )}
       </div>
     </div>
   );
