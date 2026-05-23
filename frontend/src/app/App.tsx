@@ -6,10 +6,10 @@ import { MapDetailScreen } from './components/MapDetailScreen';
 
 type AppScreen = 'main' | 'routeList' | 'mapDetail';
 // healthcheck api
-type HealthStatus = {
-  status: 'idle' | 'loading' | 'success' | 'error';
-  message: string;
-};
+// type HealthStatus = {
+//   status: 'idle' | 'loading' | 'success' | 'error';
+//   message: string;
+// };
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>('main');
@@ -18,22 +18,22 @@ export default function App() {
   const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
   // heathcheck api
-  const [healthStatus, setHealthStatus] = useState<HealthStatus>({ status: 'idle', message: '대기 중...' });
-  const checkServerHealth = async () => {
-    setHealthStatus({ status: 'loading', message: '요청 중...' });
-    try {
-      const res = await fetch('http://127.0.0.1:8000/healthcheck');
-      if (res.ok) {
-        const data = await res.json();
-        setHealthStatus({ status: 'success', message: `✅ 성공! 백엔드 상태: ${data.status}` });
-      } else {
-        setHealthStatus({ status: 'error', message: `❌ HTTP 에러: ${res.status}` });
-      }
-    } catch (err) {
-      setHealthStatus({ status: 'error', message: '⚠️ 연결 실패 (서버가 켜져 있는지 확인하세요)' });
-      console.error('Healthcheck Error:', err);
-    }
-  };
+  // const [healthStatus, setHealthStatus] = useState<HealthStatus>({ status: 'idle', message: '대기 중...' });
+  // const checkServerHealth = async () => {
+  //   setHealthStatus({ status: 'loading', message: '요청 중...' });
+  //   try {
+  //     const res = await fetch('http://127.0.0.1:8000/healthcheck');
+  //     if (res.ok) {
+  //       const data = await res.json();
+  //       setHealthStatus({ status: 'success', message: `✅ 성공! 백엔드 상태: ${data.status}` });
+  //     } else {
+  //       setHealthStatus({ status: 'error', message: `❌ HTTP 에러: ${res.status}` });
+  //     }
+  //   } catch (err) {
+  //     setHealthStatus({ status: 'error', message: '⚠️ 연결 실패 (서버가 켜져 있는지 확인하세요)' });
+  //     console.error('Healthcheck Error:', err);
+  //   }
+  // };
 
   return (
     <div
@@ -49,7 +49,7 @@ export default function App() {
       </div>
 
       {/* healthcheck api ui */}
-      <div className="flex flex-col items-center gap-2 mb-2 w-full max-w-[390px]">
+      {/* <div className="flex flex-col items-center gap-2 mb-2 w-full max-w-[390px]">
         <button
           onClick={checkServerHealth}
           className="flex items-center gap-2 rounded-xl px-4 py-2 transition-all active:scale-95"
@@ -71,7 +71,7 @@ export default function App() {
             {healthStatus.message}
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Phone frame */}
       <div

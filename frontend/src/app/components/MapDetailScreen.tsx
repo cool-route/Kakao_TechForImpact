@@ -183,7 +183,7 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
         const startPos = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
         const endPos = new window.kakao.maps.LatLng(route.end[0], route.end[1]);
         const startContent = `<div style="background:#4A90D9;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚶‍♂️</div>`;
-        const endContent = `<div style="background:#E74C3C;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚩</div>`;
+        const endContent = `<div style="background:#E74C3C;border:2px solid white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🏳️</div>`;
         overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: startPos, content: startContent, map, yAnchor: 1 }));
         overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: endPos, content: endContent, map, yAnchor: 1 }));
       });
