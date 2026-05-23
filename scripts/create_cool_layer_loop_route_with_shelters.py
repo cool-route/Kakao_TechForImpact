@@ -14,29 +14,10 @@ from shapely.geometry import mapping, LineString, Point
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-nodes_path = (
-    BASE_DIR
-    / "data"
-    / "nodes_with_score.geojson"
-)
-
-edges_path = (
-    BASE_DIR
-    / "data"
-    / "sujiku_edges_5186.geojson"
-)
-
-shelters_path = (
-    BASE_DIR
-    / "data"
-    / "shelters.json"
-)
-
-output_dir = (
-    BASE_DIR
-    / "outputs"
-)
-
+nodes_path   = BASE_DIR / "data" / "nodes_with_score.geojson"
+edges_path   = BASE_DIR / "data" / "sujiku_edges_5186.geojson"
+shelters_path = BASE_DIR / "data" / "shelters.json"
+output_dir   = BASE_DIR / "outputs"
 output_dir.mkdir(exist_ok=True)
 
 # =========================================
@@ -73,15 +54,12 @@ score_map = dict(zip(nodes["osmid"], nodes["heat_score"]))
 # =========================================
 
 edge_scores = []
-
 for idx, edge in edges.iterrows():
     u = edge["u"]
     v = edge["v"]
     score_u = score_map.get(u, np.nan)
     score_v = score_map.get(v, np.nan)
-    score = np.nanmean([score_u, score_v])
-    edge_scores.append(score)
-
+    edge_scores.append(np.nanmean([score_u, score_v]))
 edges["heat_score"] = edge_scores
 
 # =========================================
@@ -101,7 +79,6 @@ print(q1, q2, q3, q4)
 # =========================================
 
 G = nx.Graph()
-
 for idx, row in nodes.iterrows():
     G.add_node(
         row["osmid"],
@@ -112,6 +89,8 @@ for idx, row in nodes.iterrows():
 
 # =========================================
 # 6. 엣지 추가 (메인 + fallback)
+# ★ 변경: 메인을 q4 이하까지 확대 → 성공률 향상
+#          fallback은 전체 엣지 허용 (빨간 길 포함, 초고 페널티)
 # =========================================
 
 G_fallback = nx.Graph()
@@ -123,7 +102,6 @@ for idx, row in edges.iterrows():
 
     if u not in G.nodes or v not in G.nodes:
         continue
-
     if row.geometry is None:
         continue
 
@@ -131,41 +109,42 @@ for idx, row in edges.iterrows():
     if np.isnan(edge_heat):
         edge_heat = 999
 
-    # fallback 그래프: q4 이하
-    if edge_heat <= q4:
-        if edge_heat <= q1:
-            multiplier_fb = 0.2
-        elif edge_heat <= q2:
-            multiplier_fb = 0.8
-        elif edge_heat <= q3:
-            multiplier_fb = 3.0
-        else:
-            multiplier_fb = 10.0
+    # ★ fallback: 전체 엣지 (빨간 길도 포함, 초고 페널티)
+    if edge_heat <= q1:
+        mult_fb = 0.2
+    elif edge_heat <= q2:
+        mult_fb = 0.8
+    elif edge_heat <= q3:
+        mult_fb = 3.0
+    elif edge_heat <= q4:
+        mult_fb = 10.0
+    else:
+        mult_fb = 50.0  # 빨간 길: 탐색은 허용하되 매우 높은 페널티
 
-        G_fallback.add_edge(
-            u, v,
-            weight=row["length"] * multiplier_fb,
-            length=row["length"],
-            heat_score=edge_heat,
-            geometry=row.geometry
-        )
+    G_fallback.add_edge(
+        u, v,
+        weight=row["length"] * mult_fb,
+        length=row["length"],
+        heat_score=edge_heat,
+        geometry=row.geometry
+    )
 
-    # 메인 그래프: q3 이하
-    if edge_heat > q3:
+    # ★ 메인: q4 이하 (기존 q3→q4로 확대)
+    if edge_heat > q4:
         continue
 
     if edge_heat <= q1:
         multiplier = 0.2
     elif edge_heat <= q2:
         multiplier = 0.8
-    else:
+    elif edge_heat <= q3:
         multiplier = 3.0
-
-    weight = row["length"] * multiplier
+    else:                  # q3 < score <= q4 (주황)
+        multiplier = 10.0
 
     G.add_edge(
         u, v,
-        weight=weight,
+        weight=row["length"] * multiplier,
         length=row["length"],
         heat_score=edge_heat,
         geometry=row.geometry
@@ -210,8 +189,7 @@ node_lats   = nodes.geometry.y.values
 
 def snap_to_node(lat, lon):
     dists = (node_lats - lat) ** 2 + (node_lons - lon) ** 2
-    idx   = int(np.argmin(dists))
-    return node_osmids[idx]
+    return node_osmids[int(np.argmin(dists))]
 
 shelters = []
 for s in shelters_list:
@@ -226,7 +204,6 @@ for s in shelters_list:
     })
 
 shelter_node_set = set(s["node"] for s in shelters)
-
 shelter_node_map = {}
 for s in shelters:
     if s["node"] not in shelter_node_map:
@@ -235,37 +212,77 @@ for s in shelters:
 print(f"스냅 완료: 쉼터 {len(shelters)}개 → 유니크 노드 {len(shelter_node_map)}개")
 
 # =========================================
-# 7-T. 쉼터 주변 시원한 출발점 후보 생성
+# 7-T. 노드 heat 맵
 # =========================================
 
-node_heat_map  = dict(zip(nodes["osmid"].values, nodes["heat_score"].values))
-cool_threshold = nodes["heat_score"].quantile(0.6)
-
-def get_cool_nodes_near_shelter(shelter_node, graph, top_k=8):
-    visited = set()
-    queue   = [shelter_node]
-    visited.add(shelter_node)
-    candidates = []
-    max_bfs = 300
-
-    while queue and len(visited) < max_bfs:
-        cur = queue.pop(0)
-        heat = node_heat_map.get(cur, 999)
-
-        if heat <= cool_threshold and graph.degree(cur) > 0:
-            candidates.append((cur, heat))
-
-        for nxt in graph.neighbors(cur):
-            if nxt not in visited:
-                visited.add(nxt)
-                queue.append(nxt)
-
-    candidates.sort(key=lambda x: x[1])
-    return [c[0] for c in candidates[:top_k]]
+node_heat_map = dict(zip(nodes["osmid"].values, nodes["heat_score"].values))
 
 # =========================================
-# 8. 쉼터를 공간 그리드로 분할해 지역별 후보 구성
-# ★ 변경: n_regions 30 → 40 (더 세밀한 분산)
+# 8. ★ 출발점 후보: 쉼터 기준 BFS 대신
+#       전체 노드를 공간 그리드로 나눠 지역별 시원한 노드 풀 생성
+#       → 특정 쉼터 주변에만 출발점이 몰리는 문제 해결
+# =========================================
+
+def get_start_candidate_pool(nodes_gdf, G_ref, n_regions=40, top_k_per_region=6):
+    """
+    전체 노드를 공간 그리드로 나눠 각 셀에서
+    heat_score 낮고 graph degree > 0 인 노드 top_k개씩 수집.
+    반환: { region_idx: [osmid, ...] }
+    """
+    cool_q = nodes_gdf["heat_score"].quantile(0.5)   # 하위 50% 이내
+    cool_nodes = nodes_gdf[
+        (nodes_gdf["heat_score"] <= cool_q)
+    ].copy()
+
+    minx = cool_nodes.geometry.x.min()
+    maxx = cool_nodes.geometry.x.max()
+    miny = cool_nodes.geometry.y.min()
+    maxy = cool_nodes.geometry.y.max()
+
+    grid_cols = int(np.ceil(np.sqrt(n_regions)))
+    grid_rows = int(np.ceil(n_regions / grid_cols))
+
+    x_bins = np.linspace(minx, maxx, grid_cols + 1)
+    y_bins = np.linspace(miny, maxy, grid_rows + 1)
+
+    pool = {}   # region_idx → list of osmid
+    idx  = 0
+
+    for r in range(grid_rows):
+        for c in range(grid_cols):
+            mask = (
+                (cool_nodes.geometry.x >= x_bins[c]) &
+                (cool_nodes.geometry.x <  x_bins[c + 1]) &
+                (cool_nodes.geometry.y >= y_bins[r]) &
+                (cool_nodes.geometry.y <  y_bins[r + 1])
+            )
+            cell = cool_nodes[mask]
+            if cell.empty:
+                idx += 1
+                continue
+
+            # degree > 0 필터
+            valid = [
+                row["osmid"] for _, row in cell.iterrows()
+                if G_ref.degree(row["osmid"]) > 0
+            ]
+            if not valid:
+                idx += 1
+                continue
+
+            # heat 낮은 순 정렬
+            valid_sorted = sorted(valid, key=lambda n: node_heat_map.get(n, 999))
+            pool[idx] = valid_sorted[:top_k_per_region]
+            idx += 1
+
+    return pool
+
+
+start_pool = get_start_candidate_pool(nodes, G, n_regions=40, top_k_per_region=6)
+print(f"출발점 후보 지역 수: {len(start_pool)}")
+
+# =========================================
+# 8-S. 쉼터 공간 그리드 (쉼터 근접성 확인용)
 # =========================================
 
 def get_shelter_region_groups(shelters, n_regions=40):
@@ -282,7 +299,6 @@ def get_shelter_region_groups(shelters, n_regions=40):
     y_bins = np.linspace(miny, maxy, grid_rows + 1)
 
     groups = []
-
     for r in range(grid_rows):
         for c in range(grid_cols):
             cell = [
@@ -295,39 +311,38 @@ def get_shelter_region_groups(shelters, n_regions=40):
 
     return groups
 
-
 shelter_region_groups = get_shelter_region_groups(shelters, n_regions=40)
 print(f"쉼터 지역 그룹 수: {len(shelter_region_groups)}")
 
 # =========================================
-# 9. 쉼터 N개 경유 사이클 탐색
-# ★ 변경: max_length 파라미터 추가 → 10km 상한 적용
+# 9. ★ 쉼터 N개 경유 사이클 탐색
+#    문제1 해결: max_steps 대폭 증가 + 탐색 효율화
+#    문제2 해결: max_length 제거, max_edges로 대체
+#               (엣지 수 제한 → 자연스러운 길이 분포)
 # =========================================
-
-MAX_ROUTE_LENGTH = 10000  # ★ 요구2: 최대 경로 길이 10km
 
 def find_cycle_with_shelters(
     G,
     start_node,
     required_shelters,
     shelter_node_set,
-    max_steps=10000,
-    min_edges=5,
-    max_length=MAX_ROUTE_LENGTH   # ★ 추가: 거리 상한
+    max_steps=30000,     # ★ 10000 → 30000
+    min_edges=4,
+    max_edges=80,        # ★ max_length 대신 max_edges로 경로 길이 간접 제어
 ):
     COOL_NEIGHBOR_TOPK = 6
 
     init_shelters = frozenset([start_node]) if start_node in shelter_node_set else frozenset()
 
+    # 스택: (current, path_tuple, visited_edges_frozenset, total_length, visited_shelters)
     stack = [(
         start_node,
-        [start_node],
-        set(),
+        (start_node,),
+        frozenset(),
         0.0,
         init_shelters
     )]
 
-    best_result = None
     steps = 0
 
     while stack and steps < max_steps:
@@ -336,21 +351,21 @@ def find_cycle_with_shelters(
 
         # 사이클 완성 체크
         if (
-            len(path) > min_edges
+            len(path) > min_edges + 1
             and current == start_node
             and len(visited_shelters) >= required_shelters
         ):
-            best_result = (path, total_length, visited_shelters)
-            break
+            return (list(path), total_length, visited_shelters)
 
-        # ★ 거리 상한 초과 시 가지치기
-        if total_length > max_length:
+        # ★ 엣지 수 상한 초과 가지치기
+        if len(path) > max_edges:
             continue
 
         neighbors = list(G.neighbors(current))
         neighbors.sort(key=lambda n: G[current][n]["heat_score"])
         neighbors = neighbors[:COOL_NEIGHBOR_TOPK]
 
+        # 출발점 복귀 기회 보장
         if (
             start_node in G.neighbors(current)
             and start_node not in neighbors
@@ -358,7 +373,7 @@ def find_cycle_with_shelters(
             neighbors.append(start_node)
 
         for nxt in neighbors:
-            edge_key = tuple(sorted((current, nxt)))
+            edge_key = (min(current, nxt), max(current, nxt))
 
             if edge_key in visited_edges:
                 continue
@@ -366,31 +381,31 @@ def find_cycle_with_shelters(
             edge_data  = G[current][nxt]
             new_length = total_length + edge_data["length"]
 
-            # ★ 다음 이동 후에도 상한 초과하면 스킵
-            if new_length > max_length and nxt != start_node:
-                continue
-
+            # 출발점 복귀 조건
             if nxt == start_node:
                 new_shelters_check = (
-                    visited_shelters | {nxt}
+                    visited_shelters | frozenset([nxt])
                     if nxt in shelter_node_set
                     else visited_shelters
                 )
                 if len(new_shelters_check) < required_shelters:
                     continue
 
-            new_visited  = visited_edges | {edge_key}
-            new_path     = path + [nxt]
             new_shelters = (
-                visited_shelters | {nxt}
+                visited_shelters | frozenset([nxt])
                 if nxt in shelter_node_set
                 else visited_shelters
             )
 
-            stack.append((nxt, new_path, new_visited, new_length, new_shelters))
+            stack.append((
+                nxt,
+                path + (nxt,),
+                visited_edges | frozenset([edge_key]),
+                new_length,
+                new_shelters
+            ))
 
-    return best_result if best_result else (None, 0, frozenset())
-
+    return (None, 0, frozenset())
 
 # =========================================
 # 10. GeoJSON 저장 함수
@@ -404,10 +419,8 @@ def save_route_geojson(path_nodes, G, nodes_gdf, output_path_prefix):
             route_node_rows.append(row.iloc[0])
 
     if route_node_rows:
-        route_nodes_gdf = gpd.GeoDataFrame(route_node_rows, crs="EPSG:4326")
-        route_nodes_gdf.to_file(
-            str(output_path_prefix) + "_nodes.geojson",
-            driver="GeoJSON"
+        gpd.GeoDataFrame(route_node_rows, crs="EPSG:4326").to_file(
+            str(output_path_prefix) + "_nodes.geojson", driver="GeoJSON"
         )
 
     edge_records = []
@@ -417,18 +430,15 @@ def save_route_geojson(path_nodes, G, nodes_gdf, output_path_prefix):
         if G.has_edge(u, v):
             ed = G[u][v]
             edge_records.append({
-                "u": u,
-                "v": v,
+                "u": u, "v": v,
                 "length": ed["length"],
                 "heat_score": ed["heat_score"],
                 "geometry": ed["geometry"]
             })
 
     if edge_records:
-        route_edges_gdf = gpd.GeoDataFrame(edge_records, crs="EPSG:4326")
-        route_edges_gdf.to_file(
-            str(output_path_prefix) + "_edges.geojson",
-            driver="GeoJSON"
+        gpd.GeoDataFrame(edge_records, crs="EPSG:4326").to_file(
+            str(output_path_prefix) + "_edges.geojson", driver="GeoJSON"
         )
 
 # =========================================
@@ -447,17 +457,14 @@ ROUTES_PER_GROUP = 2
 
 # =========================================
 # 13. 경로 생성 메인 루프
-# ★ 변경1: global_used_regions 대신
-#           global_used_shelter_nodes 로 쉼터 단위 블랙리스트
-#           → 특정 쉼터(풍덕천 등) 반복 선택 원천 차단
-# ★ 변경2: 각 n_shelters 루프마다 지역 순서를 새로 섞되
-#           전체 사용 쉼터 노드만 공유
+# ★ 문제3 해결:
+#   - 출발점을 전체 그리드 풀(start_pool)에서 선택
+#   - 블랙리스트를 앵커 쉼터 단위가 아닌 start_node 단위로만 관리
+#   - n_shelters 루프마다 지역 순서 새로 섞기
+#   - 두 번째 경로는 첫 번째와 다른 지역 그룹 강제
 # =========================================
 
-# ★ 전체 실행에서 사용된 앵커 쉼터 노드 블랙리스트
-global_used_shelter_nodes = set()
-# ★ 전체 실행에서 사용된 출발 노드
-global_used_starts = set()
+global_used_starts   = set()   # 전체 실행에서 사용된 출발 노드
 
 for (n_shelters, _) in shelter_targets:
 
@@ -466,9 +473,12 @@ for (n_shelters, _) in shelter_targets:
     print(f"{'='*40}")
 
     found_count = 0
+    local_used_regions = set()   # ★ 이 n_shelters 내에서 사용된 지역
 
     rng = random.Random()
-    region_order = list(range(len(shelter_region_groups)))
+
+    # 지역 순서 섞기 (실행마다 다양한 위치)
+    region_order = list(start_pool.keys())
     rng.shuffle(region_order)
 
     for region_idx in region_order:
@@ -476,199 +486,164 @@ for (n_shelters, _) in shelter_targets:
         if found_count >= ROUTES_PER_GROUP:
             break
 
-        region_shelters = shelter_region_groups[region_idx]
+        # ★ 같은 n_shelters 루프 내 지역 재사용 금지
+        if region_idx in local_used_regions:
+            continue
 
-        region_shelters_shuffled = list(region_shelters)
-        rng.shuffle(region_shelters_shuffled)
+        candidates = list(start_pool[region_idx])
+        rng.shuffle(candidates)
 
-        succeeded = False
+        for start_node in candidates:
 
-        for anchor_shelter in region_shelters_shuffled:
-
-            anchor_node = anchor_shelter["node"]
-
-            # ★ 이미 사용된 쉼터 노드 스킵 (풍덕천 반복 방지)
-            if anchor_node in global_used_shelter_nodes:
+            if start_node in global_used_starts:
                 continue
 
-            start_candidates = get_cool_nodes_near_shelter(
-                anchor_node, G, top_k=8
+            if G.degree(start_node) == 0:
+                continue
+
+            print(f"  출발점 시도: {start_node} (지역 {region_idx})")
+
+            # 1차: 메인 그래프(q4 이하)
+            result_path, result_length, result_shelters = find_cycle_with_shelters(
+                G,
+                start_node,
+                n_shelters,
+                shelter_node_set,
+                max_steps=30000,
+                min_edges=4,
+                max_edges=80
             )
-            if not start_candidates:
-                start_candidates = get_cool_nodes_near_shelter(
-                    anchor_node, G_fallback, top_k=8
+
+            # 2차: fallback(전체 엣지)
+            if result_path is None:
+                print(f"  → 메인 실패, fallback 재시도...")
+                result_path, result_length, result_shelters = find_cycle_with_shelters(
+                    G_fallback,
+                    start_node,
+                    n_shelters,
+                    shelter_node_set,
+                    max_steps=30000,
+                    min_edges=4,
+                    max_edges=80
                 )
-
-            if not start_candidates:
-                continue
-
-            rng.shuffle(start_candidates)
-
-            for start_node in start_candidates:
-
-                # ★ 전체 실행에서 사용된 출발점 스킵
-                if start_node in global_used_starts:
-                    continue
-
-                print(f"  출발점 시도: {start_node} "
-                      f"(지역 {region_idx}, 쉼터: {anchor_shelter['name']})")
-
-                # 1차: 메인 그래프(파·초·노)
-                result_path, result_length, result_shelters = (None, 0, frozenset())
+                used_graph = G_fallback
+            else:
                 used_graph = G
 
-                if start_node in G.nodes and G.degree(start_node) > 0:
-                    result_path, result_length, result_shelters = find_cycle_with_shelters(
-                        G,
-                        start_node,
-                        n_shelters,
-                        shelter_node_set,
-                        max_steps=10000,
-                        min_edges=5,
-                        max_length=MAX_ROUTE_LENGTH
-                    )
+            if result_path is None:
+                print(f"  → 실패")
+                continue
 
-                # 2차: fallback(파·초·노·주황)
-                if result_path is None:
-                    print(f"  → 메인 실패, fallback 재시도...")
-                    used_graph = G_fallback
-                    result_path, result_length, result_shelters = find_cycle_with_shelters(
-                        G_fallback,
-                        start_node,
-                        n_shelters,
-                        shelter_node_set,
-                        max_steps=10000,
-                        min_edges=5,
-                        max_length=MAX_ROUTE_LENGTH
-                    )
+            graph_label = "메인(q4↓)" if used_graph is G else "fallback(전체)"
+            print(f"  → 성공! [{graph_label}] 거리: {result_length:.1f}m "
+                  f"| 경유 쉼터: {len(result_shelters)}개 "
+                  f"| 노드 수: {len(result_path)}")
 
-                if result_path is None:
-                    print(f"  → 실패")
+            global_used_starts.add(start_node)
+            local_used_regions.add(region_idx)
+
+            route_id = f"shelter{n_shelters}_route{found_count + 1}"
+
+            # ---------------------------
+            # 지도 생성 (HTML)
+            # ---------------------------
+
+            start_geom = nodes[nodes["osmid"] == start_node].geometry.iloc[0]
+
+            m = folium.Map(
+                location=[start_geom.y, start_geom.x],
+                zoom_start=15,
+                tiles=None
+            )
+            folium.TileLayer(
+                tiles="OpenStreetMap",
+                opacity=0.5,
+                name="background"
+            ).add_to(m)
+
+            mid_lat, mid_lng = start_geom.y, start_geom.x
+            all_coords = []
+
+            for i in range(len(result_path) - 1):
+                u = result_path[i]
+                v = result_path[i + 1]
+                if not used_graph.has_edge(u, v):
                     continue
 
-                graph_label = "파·초·노" if used_graph is G else "파·초·노·주황"
-                print(f"  → 성공! [{graph_label}] 거리: {result_length:.1f}m "
-                      f"| 경유 쉼터: {len(result_shelters)}개 "
-                      f"| 노드 수: {len(result_path)}")
+                edge_data = used_graph[u][v]
+                geom      = edge_data["geometry"]
+                score     = edge_data["heat_score"]
+                color     = get_color(score)
 
-                # ★ 전역 블랙리스트 등록
-                global_used_shelter_nodes.add(anchor_node)
-                global_used_starts.add(start_node)
-
-                route_id = f"shelter{n_shelters}_route{found_count + 1}"
-
-                # ---------------------------
-                # 지도 생성 (HTML)
-                # ---------------------------
-
-                start_geom = nodes[nodes["osmid"] == start_node].geometry.iloc[0]
-
-                m = folium.Map(
-                    location=[start_geom.y, start_geom.x],
-                    zoom_start=15,
-                    tiles=None
-                )
-
-                folium.TileLayer(
-                    tiles="OpenStreetMap",
-                    opacity=0.5,
-                    name="background"
-                ).add_to(m)
-
-                mid_lat, mid_lng = start_geom.y, start_geom.x
-                all_coords = []
-
-                for i in range(len(result_path) - 1):
-                    u = result_path[i]
-                    v = result_path[i + 1]
-
-                    if not used_graph.has_edge(u, v):
-                        continue
-
-                    edge_data = used_graph[u][v]
-                    geom      = edge_data["geometry"]
-                    score     = edge_data["heat_score"]
-                    color     = get_color(score)
-
-                    if geom.geom_type == "LineString":
-                        coords = [[y, x] for x, y in geom.coords]
-                        all_coords.extend(coords)
-
-                        folium.PolyLine(
-                            locations=coords,
-                            color=color,
-                            weight=6,
-                            opacity=0.95,
-                            tooltip=f"Heat Score: {score:.2f}"
-                        ).add_to(m)
-
-                if all_coords:
-                    mid_idx = len(all_coords) // 2
-                    mid_lat, mid_lng = all_coords[mid_idx]
-
-                km_label = f"{result_length / 1000:.2f} km"
-
-                folium.Marker(
-                    location=[mid_lat, mid_lng],
-                    icon=folium.DivIcon(
-                        html=f"""
-                            <div style="
-                                background-color: white;
-                                border: 1.5px solid #333;
-                                border-radius: 3px;
-                                padding: 2px 5px;
-                                font-size: 11px;
-                                font-weight: bold;
-                                color: #222;
-                                white-space: nowrap;
-                                box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-                            ">{km_label}</div>
-                        """,
-                        icon_size=(60, 22),
-                        icon_anchor=(30, 11),
-                    )
-                ).add_to(m)
-
-                folium.Marker(
-                    location=[start_geom.y, start_geom.x],
-                    tooltip=f"출발/도착 | 쉼터{n_shelters}개 | {result_length:.0f}m",
-                    icon=folium.Icon(color="green")
-                ).add_to(m)
-
-                for node_osmid in result_shelters:
-                    if node_osmid not in shelter_node_map:
-                        continue
-                    s = shelter_node_map[node_osmid]
-
-                    popup_html = f"""
-                        <div style="font-size:13px; min-width:180px;">
-                            <b>{s['name']}</b><br>
-                            <span style="color:#555;">종류: {s['type']}</span><br>
-                            <span style="color:#555;">주소: {s['address']}</span>
-                        </div>
-                    """
-
-                    folium.Marker(
-                        location=[s["lat"], s["lon"]],
-                        tooltip=s["name"],
-                        popup=folium.Popup(popup_html, max_width=260),
-                        icon=folium.Icon(color="blue", icon="home", prefix="fa")
+                if geom.geom_type == "LineString":
+                    coords = [[y, x] for x, y in geom.coords]
+                    all_coords.extend(coords)
+                    folium.PolyLine(
+                        locations=coords,
+                        color=color,
+                        weight=6,
+                        opacity=0.95,
+                        tooltip=f"Heat Score: {score:.2f}"
                     ).add_to(m)
 
-                html_path = output_dir / f"cool_cycle_{route_id}.html"
-                m.save(str(html_path))
-                print(f"  → HTML 저장: {html_path.name}")
+            if all_coords:
+                mid_lat, mid_lng = all_coords[len(all_coords) // 2]
 
-                geojson_prefix = output_dir / f"cool_cycle_{route_id}"
-                save_route_geojson(result_path, used_graph, nodes, geojson_prefix)
-                print(f"  → GeoJSON 저장: cool_cycle_{route_id}_nodes/edges.geojson")
+            folium.Marker(
+                location=[mid_lat, mid_lng],
+                icon=folium.DivIcon(
+                    html=f"""
+                        <div style="
+                            background-color: white;
+                            border: 1.5px solid #333;
+                            border-radius: 3px;
+                            padding: 2px 5px;
+                            font-size: 11px;
+                            font-weight: bold;
+                            color: #222;
+                            white-space: nowrap;
+                            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+                        ">{result_length / 1000:.2f} km</div>
+                    """,
+                    icon_size=(60, 22),
+                    icon_anchor=(30, 11),
+                )
+            ).add_to(m)
 
-                found_count += 1
-                succeeded = True
-                break  # 출발점 루프 탈출
+            folium.Marker(
+                location=[start_geom.y, start_geom.x],
+                tooltip=f"출발/도착 | 쉼터{n_shelters}개 | {result_length:.0f}m",
+                icon=folium.Icon(color="green")
+            ).add_to(m)
 
-            if succeeded:
-                break  # 쉼터 루프 탈출 → 다음 지역으로
+            for node_osmid in result_shelters:
+                if node_osmid not in shelter_node_map:
+                    continue
+                s = shelter_node_map[node_osmid]
+                popup_html = f"""
+                    <div style="font-size:13px; min-width:180px;">
+                        <b>{s['name']}</b><br>
+                        <span style="color:#555;">종류: {s['type']}</span><br>
+                        <span style="color:#555;">주소: {s['address']}</span>
+                    </div>
+                """
+                folium.Marker(
+                    location=[s["lat"], s["lon"]],
+                    tooltip=s["name"],
+                    popup=folium.Popup(popup_html, max_width=260),
+                    icon=folium.Icon(color="blue", icon="home", prefix="fa")
+                ).add_to(m)
+
+            html_path = output_dir / f"cool_cycle_{route_id}.html"
+            m.save(str(html_path))
+            print(f"  → HTML 저장: {html_path.name}")
+
+            geojson_prefix = output_dir / f"cool_cycle_{route_id}"
+            save_route_geojson(result_path, used_graph, nodes, geojson_prefix)
+            print(f"  → GeoJSON 저장: cool_cycle_{route_id}_nodes/edges.geojson")
+
+            found_count += 1
+            break  # 다음 지역으로
 
     print(f"\n쉼터 {n_shelters}개 경유: {found_count}/{ROUTES_PER_GROUP}개 생성 완료")
 
