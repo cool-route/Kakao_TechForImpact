@@ -199,7 +199,7 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
     }
 
     const script = document.createElement('script');
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false&libraries=services`;
     script.async = true;
     script.defer = true;
     script.addEventListener('load', initMap);
