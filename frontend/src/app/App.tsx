@@ -127,7 +127,7 @@ export default function App() {
 
       {/* Screen indicators */}
       <div className="flex gap-2 items-center">
-        {(['main', 'routeList', 'mapDetail'] as AppScreen[]).map((s, i) => (
+        {(['main', 'routeList', 'mapDetail'] as AppScreen[]).map((s) => (
           <div
             key={s}
             className="rounded-full transition-all"

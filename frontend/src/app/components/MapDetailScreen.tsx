@@ -199,7 +199,7 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
     }
 
     const script = document.createElement('script');
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false&libraries=services`;
     script.async = true;
     script.defer = true;
     script.addEventListener('load', initMap);
@@ -340,7 +340,7 @@ export function MapDetailScreen({ route, onBack, kakaoApiKey }: MapDetailScreenP
             style={{ background: `linear-gradient(135deg, ${route.color}, ${route.color}CC)`, boxShadow: `0 6px 24px ${route.color}55` }}
           >
             <Navigation size={18} color="white" strokeWidth={2.5} />
-            <span style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>경로 생성하기</span>
+            <span style={{ fontSize: '17px', fontWeight: '700', color: 'white' }}>경로 선택하기</span>
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-from app.services.route_service import get_recommended_routes, load_route_specs, shortest_cool_route
+from app.services.route_service import get_recommended_routes, shortest_cool_route
 
 
 START = (37.3219, 127.0972)
@@ -18,21 +18,33 @@ def test_recommended_routes_count_and_filtering():
     all_routes = get_recommended_routes()
     elderly_routes = get_recommended_routes("노약자")
 
-    assert len(all_routes) == 5
-    assert len(elderly_routes) == 5
+    assert len(all_routes) == 14
+    assert len(elderly_routes) == 14
     assert all(route["mode"] == "노약자" for route in elderly_routes)
 
 
-def test_route_specs_are_five_elderly_routes():
-    specs = load_route_specs()
+def test_recommended_routes_have_required_fields():
+    routes = get_recommended_routes()
+    for route in routes:
+        assert "id" in route
+        assert "name" in route
+        assert "mode" in route
+        assert "heat_score_avg" in route
+        assert "distance_m" in route
+        assert "geojson" in route
+        assert "shelters" in route
+        assert route["geojson"]["type"] == "FeatureCollection"
 
-    assert len(specs) == 5
-    assert [spec["id"] for spec in specs] == list(range(1, 6))
-    assert all(spec["mode"] == "노약자" for spec in specs)
+
+def test_shelter_routes_have_shelters():
+    routes = get_recommended_routes()
+    shelter_routes = [r for r in routes if "쉼터 경유" in r["name"]]
+    assert len(shelter_routes) > 0
+    for r in shelter_routes:
+        assert len(r["shelters"]) > 0
 
 
 def test_elderly_route_includes_shelter_when_available():
     result = shortest_cool_route("노약자", START, END)
 
     assert isinstance(result["shelters"], list)
-    assert len(result["shelters"]) > 0

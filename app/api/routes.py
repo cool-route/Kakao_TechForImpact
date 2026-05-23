@@ -2,8 +2,8 @@ import networkx as nx
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import MODES
-from app.schemas.routes import Mode, RecommendedRouteResponse, RouteRequest, RouteResponse, ShelterResponse
-from app.services.route_service import get_all_shelters, get_recommended_routes, shortest_cool_route
+from app.schemas.routes import Mode, NearestRouteResponse, RecommendedRouteResponse, RouteRequest, RouteResponse, ShelterResponse
+from app.services.route_service import find_nearest_route, get_all_shelters, get_recommended_routes, shortest_cool_route
 
 
 router = APIRouter(tags=["routes"])
@@ -50,3 +50,19 @@ def list_routes(mode: Mode | None = Query(default=None, description="모드 필�
     if mode is not None and mode not in MODES:
         return []
     return get_recommended_routes(mode=mode)
+
+
+@router.get(
+    "/nearest-route",
+    summary="사용자 위치 기반 가장 가까운 경로 추천",
+    description="사용자 위치(위도·경도)를 받아 모든 추천 경로의 엣지 기준으로 가장 가까운 경로 1개를 반환합니다.",
+    response_model=NearestRouteResponse,
+)
+def get_nearest_route(
+    lat: float = Query(..., description="사용자 위도 — 예: 37.3219"),
+    lng: float = Query(..., description="사용자 경도 — 예: 127.0972"),
+) -> dict:
+    try:
+        return find_nearest_route(lat=lat, lng=lng)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
