@@ -6,7 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from app.core.config import MODES, ROUTE_OUTPUTS_DIR, ROUTE_OUTPUTS_SHELTERS_DIR, SHELTERS_PATH
-from app.services.geo import Coordinate, haversine_m
+from app.services.geo import Coordinate, haversine_m, point_to_segment_distance_m
 from app.services.geojson_loader import load_shelters
 from app.services.graph_loader import clear_graph_cache, load_route_graph
 from app.services.pathfinder import nearest_node, pairwise, shortest_path_for_mode
@@ -172,6 +172,42 @@ def _find_shelters_near_nodes(node_map: dict, radius_m: float = 300.0) -> list[d
                 })
                 break
     return found
+
+
+def find_nearest_route(lat: float, lng: float) -> dict:
+    routes = get_recommended_routes()
+    if not routes:
+        raise ValueError("추천 경로 데이터가 없습니다.")
+
+    user_pos: Coordinate = (lat, lng)
+    best_route = None
+    best_dist = float("inf")
+
+    for route in routes:
+        dist = _min_distance_to_geojson(user_pos, route["geojson"])
+        if dist < best_dist:
+            best_dist = dist
+            best_route = route
+
+    return {**best_route, "distance_to_user_m": round(best_dist, 1)}
+
+
+def _min_distance_to_geojson(pos: Coordinate, geojson: dict) -> float:
+    """GeoJSON FeatureCollection(LineString들) 내 모든 엣지에서 pos까지의 최소 거리."""
+    min_dist = float("inf")
+    for feature in geojson.get("features", []):
+        geom = feature.get("geometry", {})
+        if geom.get("type") != "LineString":
+            continue
+        coords = geom.get("coordinates", [])  # [[lng, lat], ...]
+        for i in range(len(coords) - 1):
+            # GeoJSON은 [lng, lat] 순서
+            a: Coordinate = (coords[i][1], coords[i][0])
+            b: Coordinate = (coords[i + 1][1], coords[i + 1][0])
+            d = point_to_segment_distance_m(pos, a, b)
+            if d < min_dist:
+                min_dist = d
+    return min_dist
 
 
 def get_all_shelters() -> list[dict]:

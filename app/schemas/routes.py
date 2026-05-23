@@ -37,3 +37,7 @@ class RecommendedRouteResponse(BaseModel):
     geojson: dict = Field(..., description="GeoJSON FeatureCollection — 추천 경로")
     shelters: list[dict] = Field(..., description="경로상 무더위쉼터 목록")
     is_dummy: bool = Field(..., description="더미 그래프 사용 여부 — 실데이터 연동 시 false")
+
+
+class NearestRouteResponse(RecommendedRouteResponse):
+    distance_to_user_m: float = Field(..., description="사용자 위치에서 가장 가까운 엣지까지의 거리 (미터)")
