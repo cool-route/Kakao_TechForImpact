@@ -43,7 +43,7 @@ export default function App() {
       {/* App title */}
       <div className="text-center">
         <h1 className="text-white" style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px' }}>
-          🌿 쿨워크 CoolWalk
+          🍃 시원한길 🍃
         </h1>
         <p className="text-white/70" style={{ fontSize: '13px', marginTop: '2px' }}>기후 기반 도보 내비게이션</p>
       </div>
@@ -139,7 +139,7 @@ export default function App() {
           />
         ))}
       </div>
-      <div className="flex gap-3">
+      {/* <div className="flex gap-3">
         {[
           { screen: 'main' as AppScreen, label: '메인', emoji: '🏠' },
           { screen: 'routeList' as AppScreen, label: '경로 목록', emoji: '📋' },
@@ -158,7 +158,7 @@ export default function App() {
             {emoji} {label}
           </button>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }
