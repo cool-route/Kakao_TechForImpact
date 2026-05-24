@@ -1,0 +1,23 @@
+{
+"type": "FeatureCollection",
+"name": "cool_cycle_1km_route2_edges",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "u": 4311916814, "v": 3641655908, "length": 60.053715642661047, "heat_score": 20.115 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.1001698, 37.3315367 ], [ 127.100849, 37.3315409 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655908, "v": 3641655901, "length": 43.961603314230025, "heat_score": 20.255 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.100849, 37.3315409 ], [ 127.1013462, 37.331544 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655901, "v": 3641655904, "length": 41.789450847435106, "heat_score": 21.565 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.1013512, 37.3311682 ], [ 127.1013462, 37.331544 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655904, "v": 3641655906, "length": 104.32386817512072, "heat_score": 21.58 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.100171500000016, 37.3311501 ], [ 127.1013512, 37.3311682 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655906, "v": 3641655903, "length": 80.907083761245261, "heat_score": 21.8 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.100171500000016, 37.3311501 ], [ 127.0992566, 37.331136 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655903, "v": 3641655900, "length": 43.933533453467497, "heat_score": 22.025 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.0992566, 37.331136 ], [ 127.0992546, 37.3315311 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655900, "v": 3641655924, "length": 47.2026782144519, "heat_score": 21.81 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.09925250000002, 37.3319556 ], [ 127.0992546, 37.3315311 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655924, "v": 3641655926, "length": 40.635319834399752, "heat_score": 22.045 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.098793, 37.3319481 ], [ 127.09925250000002, 37.3319556 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655926, "v": 3641655922, "length": 40.325936510604095, "heat_score": 22.04 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.098793, 37.3319481 ], [ 127.098337, 37.3319406 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655922, "v": 3641655911, "length": 93.677468396331733, "heat_score": 21.57 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.098337, 37.3319406 ], [ 127.098324300000016, 37.332783 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655911, "v": 3641655925, "length": 40.971140454201716, "heat_score": 20.135 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.0987877, 37.3327833 ], [ 127.098324300000016, 37.332783 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655925, "v": 3641655910, "length": 40.732422109860984, "heat_score": 20.085 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.0987877, 37.3327833 ], [ 127.0992484, 37.3327836 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655910, "v": 3641655916, "length": 43.277487842127599, "heat_score": 20.67 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.099250400000017, 37.332394399999984 ], [ 127.0992484, 37.3327836 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655916, "v": 3641655917, "length": 40.67076702293128, "heat_score": 22.025 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.0997104, 37.3323949 ], [ 127.099250400000017, 37.332394399999984 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655917, "v": 3641655918, "length": 95.738967494920402, "heat_score": 21.56 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.0997105, 37.3315339 ], [ 127.0997104, 37.3323949 ] ] } },
+{ "type": "Feature", "properties": { "u": 3641655918, "v": 4311916814, "length": 40.610496818799277, "heat_score": 20.11 }, "geometry": { "type": "LineString", "coordinates": [ [ 127.1001698, 37.3315367 ], [ 127.0997105, 37.3315339 ] ] } }
+]
+}

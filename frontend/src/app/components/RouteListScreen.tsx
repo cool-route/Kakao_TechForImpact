@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, Flame, Clock, MapPin, Star, ChevronRight, TreePine, Umbrella, Thermometer, Wind } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Flame, Clock, MapPin, Star, ChevronRight, TreePine, Umbrella, Thermometer, Wind, Navigation } from 'lucide-react';
 
 export interface RouteInfo {
   id: number;
@@ -12,70 +12,13 @@ export interface RouteInfo {
   tags: string[];
   color: string;
   difficulty: string;
+  mode: 'general' | 'elderly' | 'dog';
+  start: [number, number];
+  end: [number, number];
+  geojson: any;
+  shelters: Array<{ name: string; lat: number; lng: number; operating_hours: string }>;
 }
 
-const ROUTES: RouteInfo[] = [
-  {
-    id: 1,
-    name: '광교산 그늘길',
-    subtitle: '숲 터널 코스 · 수지구청 출발',
-    heatScore: 92,
-    distance: '2.3km',
-    duration: '35분',
-    shadeRatio: 84,
-    tags: ['그늘 우선', '자연'],
-    color: '#4A90D9',
-    difficulty: '쉬움',
-  },
-  {
-    id: 2,
-    name: '탄천 수변로',
-    subtitle: '하천변 바람길 · 정자역 출발',
-    heatScore: 78,
-    distance: '1.8km',
-    duration: '27분',
-    shadeRatio: 52,
-    tags: ['쉼터 우선', '바람'],
-    color: '#5DB87C',
-    difficulty: '쉬움',
-  },
-  {
-    id: 3,
-    name: '죽전 근린공원길',
-    subtitle: '지면 온도 낮은 공원 산책로',
-    heatScore: 71,
-    distance: '1.2km',
-    duration: '18분',
-    shadeRatio: 61,
-    tags: ['지면온도 우선'],
-    color: '#9B59B6',
-    difficulty: '쉬움',
-  },
-  {
-    id: 4,
-    name: '수지 미금 하천길',
-    subtitle: '미금역 ~ 수지구청 수변 코스',
-    heatScore: 65,
-    distance: '3.1km',
-    duration: '46분',
-    shadeRatio: 38,
-    tags: ['바람 우선'],
-    color: '#E67E22',
-    difficulty: '보통',
-  },
-  {
-    id: 5,
-    name: '광교호수공원 둘레길',
-    subtitle: '호숫가 바람, 벤치 쉼터 다수',
-    heatScore: 88,
-    distance: '4.2km',
-    duration: '62분',
-    shadeRatio: 70,
-    tags: ['쉼터 우선', '그늘 우선'],
-    color: '#2ECC71',
-    difficulty: '보통',
-  },
-];
 
 type FilterType = '전체' | '그늘 우선' | '쉼터 우선' | '지면온도 우선' | '바람 우선';
 const FILTERS: FilterType[] = ['전체', '그늘 우선', '쉼터 우선', '지면온도 우선', '바람 우선'];
@@ -174,11 +117,117 @@ interface RouteListScreenProps {
 
 const modeLabel: Record<string, string> = { general: '일반 모드', elderly: '노약자 모드', dog: '강아지 산책 모드' };
 const modeEmoji: Record<string, string> = { general: '🚶', elderly: '🧓', dog: '🐕' };
+const routeColor: Record<string, string> = { general: '#4A90D9', elderly: '#5DB87C', dog: '#9B59B6' };
+const apiModeQuery: Record<string, string> = { general: '일반', elderly: '노약자', dog: '반려동물' };
 
 export function RouteListScreen({ onBack, onSelectRoute, mode }: RouteListScreenProps) {
   const [filter, setFilter] = useState<FilterType>('전체');
+  const [routes, setRoutes] = useState<RouteInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filtered = filter === '전체' ? ROUTES : ROUTES.filter(r => r.tags.includes(filter));
+  // 위치 기반 경로 추천
+  const [addressInput, setAddressInput] = useState('');
+  const [resolvedAddress, setResolvedAddress] = useState('');
+  const [nearestRoute, setNearestRoute] = useState<RouteInfo | null>(null);
+  const [nearestDist, setNearestDist] = useState<number | null>(null);
+  const [nearestLoading, setNearestLoading] = useState(false);
+  const [nearestError, setNearestError] = useState('');
+
+  const apiItemToRouteInfo = (item: any): RouteInfo => {
+    const features = item.geojson?.features ?? [];
+    const avgShadeRatio = features.length > 0
+      ? features.reduce((s: number, f: any) => s + (f.properties?.shade_ratio ?? 0), 0) / features.length
+      : 0;
+    const firstCoord = features[0]?.geometry?.coordinates?.[0] ?? [127.1, 37.33];
+    const lastFeature = features[features.length - 1];
+    const lastCoords = lastFeature?.geometry?.coordinates ?? [[127.1, 37.33]];
+    const lastCoord = lastCoords[lastCoords.length - 1];
+    return {
+      id: item.id,
+      name: item.name,
+      subtitle: `${item.mode} 맞춤 경로`,
+      heatScore: Math.round(Math.max(0, Math.min(100, 90 - (item.heat_score_avg - 19) * 5))),
+      distance: `${(item.distance_m / 1000).toFixed(1)}km`,
+      duration: `${Math.round(item.distance_m / 1000 * 15)}분`,
+      shadeRatio: Math.round(avgShadeRatio * 100),
+      tags: item.shelters?.length > 0 ? ['쉼터 경유'] : ['기본 경로'],
+      color: routeColor[mode] ?? '#4A90D9',
+      difficulty: '보통',
+      mode,
+      start: [firstCoord[1], firstCoord[0]] as [number, number],
+      end: [lastCoord[1], lastCoord[0]] as [number, number],
+      geojson: item.geojson,
+      shelters: item.shelters ?? [],
+    };
+  };
+
+  const callNearestRoute = async (lat: number, lng: number, label: string) => {
+    try {
+      const res = await fetch(`/nearest-route?lat=${lat}&lng=${lng}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNearestRoute(apiItemToRouteInfo(data));
+        setNearestDist(data.distance_to_user_m);
+        setResolvedAddress(label);
+      } else {
+        setNearestError('경로를 찾을 수 없습니다.');
+      }
+    } catch {
+      setNearestError('서버에 연결할 수 없습니다.');
+    } finally {
+      setNearestLoading(false);
+    }
+  };
+
+  const handleFindNearest = async () => {
+    const query = addressInput.trim();
+    if (!query) { setNearestError('주소 또는 장소명을 입력해 주세요.'); return; }
+
+    setNearestError('');
+    setNearestRoute(null);
+    setNearestLoading(true);
+
+    try {
+      const params = new URLSearchParams({ q: query, format: 'json', limit: '1', countrycodes: 'kr', 'accept-language': 'ko' });
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: { 'User-Agent': 'CoolWalk/1.0' },
+      });
+      const data = await res.json();
+      if (!data.length) {
+        setNearestError('주소나 장소를 찾을 수 없습니다.');
+        setNearestLoading(false);
+        return;
+      }
+      const { lat, lon, display_name } = data[0];
+      await callNearestRoute(parseFloat(lat), parseFloat(lon), display_name);
+    } catch {
+      setNearestError('주소 검색 서비스에 연결할 수 없습니다.');
+      setNearestLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch('/routes');
+        if (res.ok) {
+          const data = await res.json();
+          setRoutes(data.map(apiItemToRouteInfo));
+        } else {
+          console.error('경로 목록 조회 실패:', res.status);
+        }
+      } catch (err) {
+        console.error('네트워크 오류:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRoutes();
+  }, [mode]);
+
+  // 필터 적용 로직
+  const filtered = filter === '전체' ? routes : routes.filter(r => r.tags.includes(filter));
 
   return (
     <div className="w-full h-full flex flex-col" style={{ background: '#F0F7FF' }}>
@@ -224,6 +273,52 @@ export function RouteListScreen({ onBack, onSelectRoute, mode }: RouteListScreen
         </div>
       </div>
 
+      {/* 위치 기반 경로 추천 */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="rounded-2xl p-3 flex flex-col gap-2" style={{ background: 'white', boxShadow: '0 2px 12px rgba(74,144,217,0.12)', border: '1.5px solid #D0E8FF' }}>
+          <div className="flex items-center gap-1.5">
+            <Navigation size={14} color="#4A90D9" />
+            <span style={{ fontSize: '13px', fontWeight: '700', color: '#1A3A5C' }}>내 위치로 가장 가까운 경로 찾기</span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="주소, 장소명, 우편번호 입력"
+              value={addressInput}
+              onChange={e => setAddressInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleFindNearest()}
+              className="flex-1 rounded-xl px-3 py-2 outline-none"
+              style={{ fontSize: '12px', border: '1.5px solid #D0E8FF', background: '#F7FBFF', color: '#1A3A5C' }}
+            />
+            <button
+              onClick={handleFindNearest}
+              disabled={nearestLoading}
+              className="rounded-xl px-4 py-2 transition-all active:scale-95 flex-shrink-0"
+              style={{ background: '#4A90D9', color: 'white', fontSize: '12px', fontWeight: '700', opacity: nearestLoading ? 0.6 : 1 }}
+            >
+              {nearestLoading ? '...' : '찾기'}
+            </button>
+          </div>
+          {nearestError && (
+            <span style={{ fontSize: '12px', color: '#E55' }}>{nearestError}</span>
+          )}
+          {resolvedAddress && nearestRoute && (
+            <span style={{ fontSize: '11px', color: '#9BB5D0' }}>📍 {resolvedAddress.split(',').slice(0, 3).join(',')}</span>
+          )}
+          {nearestRoute && nearestDist !== null && (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ background: '#5DB87C' }} />
+                <span style={{ fontSize: '12px', fontWeight: '700', color: '#5DB87C' }}>
+                  가장 가까운 경로 — {nearestDist < 1000 ? `${Math.round(nearestDist)}m` : `${(nearestDist / 1000).toFixed(1)}km`} 거리
+                </span>
+              </div>
+              <RouteCard route={nearestRoute} onSelect={() => onSelectRoute(nearestRoute)} />
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Count bar */}
       <div className="px-4 py-3 flex items-center justify-between">
         <span style={{ fontSize: '14px', fontWeight: '600', color: '#5B8CC4' }}>
@@ -235,11 +330,22 @@ export function RouteListScreen({ onBack, onSelectRoute, mode }: RouteListScreen
         </div>
       </div>
 
-      {/* Route cards */}
+      {/* Route cards / Loading spinner */}
       <div className="flex-1 overflow-y-auto px-4 pb-6 flex flex-col gap-3" style={{ scrollbarWidth: 'none' }}>
-        {filtered.map(route => (
-          <RouteCard key={route.id} route={route} onSelect={() => onSelectRoute(route)} />
-        ))}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-500">
+            <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-sm font-bold">경로 데이터를 불러오는 중...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400">
+            <p className="font-bold">조건에 맞는 경로가 없습니다.</p>
+          </div>
+        ) : (
+          filtered.map(route => (
+            <RouteCard key={route.id} route={route} onSelect={() => onSelectRoute(route)} />
+          ))
+        )}
       </div>
     </div>
   );

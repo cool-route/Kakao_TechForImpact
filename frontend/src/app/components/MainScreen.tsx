@@ -91,7 +91,7 @@ export function MainScreen({ selectedMode, onModeChange, onNavigateToRoutes }: M
     <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #B8E4F9 0%, #D4F0E8 40%, #E8F8F2 70%, #F0FBF7 100%)' }}>
       {/* Status Bar */}
       <div className="flex justify-between items-center px-5 pt-3 pb-1">
-        <span style={{ fontSize: '13px', fontWeight: '600', color: '#2D5A8E' }}>9:41</span>
+        <span style={{ fontSize: '13px', fontWeight: '600', color: '#2D5A8E' }}>0:00</span>
         <div className="flex gap-1 items-center">
           <div className="flex gap-0.5">
             {[1,2,3,4].map(i => (

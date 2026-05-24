@@ -32,15 +32,16 @@ def load_graph_from_nodes_and_edges(
     for feature in nodes_data["features"]:
         props = feature.get("properties") or {}
         osmid = str(props["osmid"])
-        lng, lat = feature["geometry"]["coordinates"]
+        lng = float(props["x"])
+        lat = float(props["y"])
         node_map[osmid] = {
             "lat": float(lat),
             "lng": float(lng),
-            "score": float(props["score"]),
-            "utci": float(props["utci"]),
-            "heat": float(props["heat"]),
+            "score": float(props["heat_score"]),
+            "utci": float(props["felt_temp"]),
+            "heat": float(props.get("heat_grade", 0.0)),
             "shade": float(props["shade"]),
-            "wind": float(props["wind"]),
+            "wind": float(props.get("wind", 0.0)),
         }
 
     graph = nx.Graph()
@@ -139,6 +140,10 @@ def load_shelters(path: str | Path) -> list[dict[str, Any]]:
 
     required = {"name", "lat", "lng"}
     for shelter in shelters:
+        if "lon" in shelter and "lng" not in shelter:
+            shelter["lng"] = shelter.pop("lon")
+        if "operating_hours" not in shelter:
+            shelter["operating_hours"] = "09:00-18:00"
         missing = required - set(shelter)
         if missing:
             raise ValueError(f"shelter is missing required fields: {sorted(missing)}")
