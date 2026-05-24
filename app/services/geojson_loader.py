@@ -59,6 +59,8 @@ def load_graph_from_nodes_and_edges(
         v_node = node_map[v]
         coords = feature["geometry"]["coordinates"]
 
+        heat_score = max(0.0, (u_node["score"] + v_node["score"]) / 2)
+
         graph.add_edge(
             u,
             v,
@@ -66,7 +68,7 @@ def load_graph_from_nodes_and_edges(
                 (u_node["lat"], u_node["lng"]),
                 (v_node["lat"], v_node["lng"]),
             )),
-            heat_score=(u_node["score"] + v_node["score"]) / 2,
+            heat_score=heat_score,
             temperature=(u_node["utci"] + v_node["utci"]) / 2,
             ground_temp=(u_node["heat"] + v_node["heat"]) / 2,
             shade_ratio=(u_node["shade"] + v_node["shade"]) / 2,

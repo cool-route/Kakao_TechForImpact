@@ -18,8 +18,8 @@ def test_recommended_routes_count_and_filtering():
     all_routes = get_recommended_routes()
     elderly_routes = get_recommended_routes("노약자")
 
-    assert len(all_routes) == 14
-    assert len(elderly_routes) == 14
+    assert len(all_routes) == 15
+    assert len(elderly_routes) == 15
     assert all(route["mode"] == "노약자" for route in elderly_routes)
 
 

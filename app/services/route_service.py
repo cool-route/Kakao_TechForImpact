@@ -56,14 +56,20 @@ def _load_precomputed_routes() -> list[dict]:
     routes = []
     route_id = 1
 
-    for directory, has_shelters in [
-        (ROUTE_OUTPUTS_DIR, False),
-        (ROUTE_OUTPUTS_SHELTERS_DIR, True),
-    ]:
+    route_directories = [(ROUTE_OUTPUTS_DIR, None)]
+    if ROUTE_OUTPUTS_SHELTERS_DIR is not None:
+        route_directories.append((ROUTE_OUTPUTS_SHELTERS_DIR, True))
+
+    for directory, has_shelters_override in route_directories:
+        if not directory.exists():
+            continue
         for edges_path in sorted(directory.glob("*_edges.geojson")):
             nodes_path = edges_path.with_name(edges_path.name.replace("_edges", "_nodes"))
             if not nodes_path.exists():
                 continue
+            has_shelters = has_shelters_override
+            if has_shelters is None:
+                has_shelters = "shelter" in edges_path.stem
             route = _build_route_from_files(route_id, edges_path, nodes_path, has_shelters)
             routes.append(route)
             route_id += 1
@@ -148,7 +154,10 @@ def _make_route_name(stem: str) -> str:
     m = re.search(r"shelter\d+_(\d+km)", stem)
     if m:
         return f"쉼터 경유 {m.group(1)} 경로"
-    m = re.search(r"(\d+km)_route_(\d+)", stem)
+    m = re.search(r"shelter(\d+)_route", stem)
+    if m:
+        return f"쉼터 경유 추천 경로 {m.group(1)}"
+    m = re.search(r"(\d+km)_route_?(\d+)", stem)
     if m:
         return f"{m.group(1)} 추천 경로 {m.group(2)}"
     return stem
@@ -217,5 +226,4 @@ def get_all_shelters() -> list[dict]:
 def clear_route_caches() -> None:
     clear_graph_cache()
     _recommended_routes_cache.clear()
-
 
