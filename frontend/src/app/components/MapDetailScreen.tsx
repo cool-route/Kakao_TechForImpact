@@ -147,12 +147,6 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
       }
       console.log('Kakao Maps SDK loaded, initializing map');
       window.kakao.maps.load(() => {
-        // const center = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
-        // const map = new window.kakao.maps.Map(mapRef.current!, { center, level: 5 });
-        // mapInstanceRef.current = map;
-
-        // overlaysRef.current.forEach((o: KakaoPolyline | KakaoMarker | KakaoCustomOverlay) => o.setMap(null));
-        // overlaysRef.current = [];
 
         const initialCenter = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
         const map = new window.kakao.maps.Map(mapRef.current!, { center: initialCenter, level: 5 });
@@ -160,18 +154,14 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
 
         overlaysRef.current.forEach((o: KakaoPolyline | KakaoMarker | KakaoCustomOverlay) => o.setMap(null));
         overlaysRef.current = [];
-
-        // ⭐ 2. 경로 전체를 담을 "빈 영역(Bounds) 상자" 만들기 (TS 에러 우회)
         const bounds = new (window.kakao.maps as any).LatLngBounds();
 
-        // 3. 경로 선 그리기 & 좌표를 영역 상자에 추가하기
         (route.geojson?.features ?? []).forEach((feature: any) => {
           const heatScore = feature.properties?.heat_score ?? 22;
           
-          // 점들을 선으로 이으면서, 동시에 영역 상자(bounds)에 점들을 쑤셔 넣습니다.
           const path = feature.geometry.coordinates.map(([lng, lat]: [number, number]) => {
             const latlng = new window.kakao.maps.LatLng(lat, lng);
-            bounds.extend(latlng); // ⭐ 핵심: 경로의 모든 꺾임점을 영역에 포함!
+            bounds.extend(latlng);
             return latlng;
           });
 
@@ -186,24 +176,16 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
           overlaysRef.current.push(polyline);
         });
 
-        // 4. 쉼터 마커 렌더링 & 쉼터 좌표도 영역 상자에 추가
         (route.shelters ?? []).forEach((shelter: any) => {
           const position = new window.kakao.maps.LatLng(shelter.lat, shelter.lng);
-          bounds.extend(position); // ⭐ 핵심: 쉼터가 화면 밖으로 나가지 않게 영역에 포함!
+          bounds.extend(position);
           
           const content = `<div style="background:#FFD700;border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.2)">🏠</div>`;
           const overlay = new window.kakao.maps.CustomOverlay({ position, content, map, yAnchor: 1 });
           overlaysRef.current.push(overlay);
         });
 
-        // 5. 사용자가 원하지 않았던 출발/도착 마커는 주석 처리된 상태로 둡니다.
-        
-        // ⭐ 6. 완성된 영역 상자를 지도에 적용! (경로가 한눈에 딱 들어오게 자동 축소/확대 됨)
         if (!bounds.isEmpty()) {
-          // setBounds(bounds, paddingTop, paddingRight, paddingBottom, paddingLeft)
-          // - 상단(100px): 뒤로가기 버튼과 타이틀 바 영역 확보
-          // - 하단(380px): 바텀 시트(약 42% 높이) 영역 확보하여 경로를 위로 끌어올림
-          // - 좌/우(40px): 화면 엣지에 경로가 너무 딱 붙지 않게 여백 추가
           (map as any).setBounds(bounds, 100, 40, 380, 40);
         }
 

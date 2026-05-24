@@ -139,26 +139,6 @@ export default function App() {
           />
         ))}
       </div>
-      {/* <div className="flex gap-3">
-        {[
-          { screen: 'main' as AppScreen, label: '메인', emoji: '🏠' },
-          { screen: 'routeList' as AppScreen, label: '경로 목록', emoji: '📋' },
-        ].map(({ screen: s, label, emoji }) => (
-          <button
-            key={s}
-            onClick={() => setScreen(s)}
-            className="rounded-xl px-3 py-1.5 transition-all active:scale-95"
-            style={{
-              background: screen === s ? 'white' : 'rgba(255,255,255,0.2)',
-              color: screen === s ? '#4A90D9' : 'white',
-              fontSize: '12px',
-              fontWeight: screen === s ? '700' : '500',
-            }}
-          >
-            {emoji} {label}
-          </button>
-        ))}
-      </div> */}
     </div>
   );
 }
