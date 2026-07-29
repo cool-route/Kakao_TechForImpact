@@ -11,7 +11,6 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 백엔드 API 데이터를 UI Model로 변환
   const apiItemToRouteInfo = (item: any, index: number): RouteInfo => {
     const features = item.geojson?.features ?? [];
     const firstCoord = features[0]?.geometry?.coordinates?.[0] ?? [127.1, 37.33];
@@ -19,8 +18,8 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
     const lastCoords = lastFeature?.geometry?.coordinates ?? [[127.1, 37.33]];
     const lastCoord = lastCoords[lastCoords.length - 1];
     
-    // 순위에 따른 테마 색상 지정
-    const rankColors = ["#3A9E66", "#4A90D9", "#F5A623"];
+    // 4위까지의 테마 색상 지정
+    const rankColors = ["#3A9E66", "#4A90D9", "#F5A623", "#9B59B6"];
 
     return {
       id: item.id || index,
@@ -44,14 +43,15 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
         const res = await fetch('/routes');
         if (res.ok) {
           const data = await res.json();
-          // 백엔드에서 받은 경로 상위 3개를 변환하여 세팅
-          setRoutes(data.slice(0, 3).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
+          // 데이터를 4개까지 가져오도록 수정
+          setRoutes(data.slice(0, 4).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
         } else {
-          // 백엔드 연결 안 될 시 사용할 Mock Data (스크린샷 기반)
+          // Mock 데이터도 4개로 확장
           setRoutes([
             { id: 1, rank: 1, name: "시민한길 A코스", distance: "2.1km", duration: "30분", tags: ["평탄", "반려동물"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3A9E66" },
             { id: 2, rank: 2, name: "시민한길 B코스", distance: "3.1km", duration: "38분", tags: ["약간 언덕", "뷰 좋음"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#4A90D9" },
             { id: 3, rank: 3, name: "올림픽공원 산책로", distance: "2.8km", duration: "35분", tags: ["잔디", "그늘"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#F5A623" },
+            { id: 4, rank: 4, name: "탄천 수변길", distance: "3.5km", duration: "45분", tags: ["수변", "바람"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#9B59B6" },
           ]);
         }
       } catch (err) {
@@ -66,13 +66,12 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
   return (
     <div className="w-full h-full bg-[#F5F7F5] pt-4 px-4 pb-6 flex flex-col">
       <div className="flex items-center gap-3 mb-4">
-        {/* 4. 뒤로가기 버튼 추가 -> 클릭 시 1번째 화면으로 */}
         <button onClick={onBack} className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 bg-white shadow-sm">
           <ArrowLeft size={18} color="#333" />
         </button>
         <div>
           <h2 className="text-xl font-black text-gray-800">경로 추천 완료!</h2>
-          <p className="text-sm text-gray-500">당신을 위한 경로 TOP 3</p>
+          <p className="text-sm text-gray-500">당신을 위한 경로 TOP 4</p>
         </div>
       </div>
 
@@ -89,7 +88,7 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
             <button
               key={route.id}
               onClick={() => onSelectRoute(route)}
-              className="bg-white border-[1.5px] border-[#A5D6A7] rounded-2xl p-4 text-left active:scale-[0.98] transition-transform shadow-sm"
+              className="bg-white border-[1.5px] border-[#A5D6A7] rounded-2xl p-4 text-left active:scale-[0.98] transition-transform shadow-sm flex-shrink-0"
             >
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: route.rankColor }}>
