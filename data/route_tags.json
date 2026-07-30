@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "description": "사전 생성된 추천 경로에 부여할 태그 매핑",
+  "routes": [
+    {
+      "route_id": 1,
+      "mode": "노약자",
+      "tags": ["시원한길", "30분", "쉼터많음", "평지"]
+    },
+    {
+      "route_id": 2,
+      "mode": "노약자",
+      "tags": ["시원한길", "30분", "그늘많음", "쉼터많음"]
+    },
+    {
+      "route_id": 3,
+      "mode": "노약자",
+      "tags": ["시원한길", "45분", "쉼터많음", "평지"]
+    },
+    {
+      "route_id": 4,
+      "mode": "노약자",
+      "tags": ["시원한길", "30분", "조용한길", "편의점"]
+    },
+    {
+      "route_id": 5,
+      "mode": "노약자",
+      "tags": ["시원한길", "30분", "쉼터많음", "편의점"]
+    }
+  ],
+  "tag_weights": {
+    "시원한길": 1.0,
+    "그늘많음": 0.9,
+    "표면온도낮음": 0.95,
+    "쉼터많음": 0.8,
+    "평지": 0.7,
+    "30분": 0.85,
+    "15분": 0.65,
+    "45분": 0.6,
+    "60분": 0.45,
+    "반려동물": 0.9,
+    "노약자": 0.8,
+    "더위민감": 0.75,
+    "걷기쉬움": 0.6,
+    "편의점": 0.55,
+    "조용한길": 0.5,
+    "공원근처": 0.58,
+    "왕복": 0.5,
+    "편도": 0.4
+  },
+  "scoring_rules": {
+    "match_score": "sum(weight for each matched tag)",
+    "mismatch_penalty": "0.15 per explicitly excluded tag",
+    "tie_breakers": ["lower_heat_score_avg", "shorter_distance_m", "more_shelters"],
+    "top_k": 3
+  }
+}

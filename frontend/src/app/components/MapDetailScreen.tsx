@@ -31,6 +31,8 @@ interface KakaoSize {}
 interface KakaoOverlayOptions { position: KakaoLatLng; content: string; map: KakaoMap; yAnchor?: number; }
 interface KakaoCustomOverlay { setMap: (map: KakaoMap | null) => void; }
 
+type MapLoadStatus = 'loading' | 'ready' | 'error';
+
 function heatScoreToColor(heatScore: number): string {
   if (heatScore < 20) return '#4A90D9';
   if (heatScore < 22) return '#5DB87C';
@@ -127,9 +129,12 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<KakaoMap | null>(null);
   const overlaysRef = useRef<(KakaoPolyline | KakaoMarker | KakaoCustomOverlay)[]>([]);
+  const [mapLoadStatus, setMapLoadStatus] = useState<MapLoadStatus>('loading');
 
   useEffect(() => {
     if (!apiKey || !mapRef.current) return;
+
+    setMapLoadStatus('loading');
 
     // ensure container has explicit size for Kakao Maps
     if (mapRef.current) {
@@ -143,6 +148,7 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
       if (!mapRef.current) return;
       if (!window.kakao || !window.kakao.maps || !window.kakao.maps.load) {
         console.error('Kakao Maps SDK not available after script load');
+        setMapLoadStatus('error');
         return;
       }
       console.log('Kakao Maps SDK loaded, initializing map');
@@ -189,31 +195,6 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
           (map as any).setBounds(bounds, 100, 40, 380, 40);
         }
 
-        // Draw route from geojson (each feature colored by heat_score)
-        (route.geojson?.features ?? []).forEach((feature: any) => {
-          const heatScore = feature.properties?.heat_score ?? 22;
-          const path = feature.geometry.coordinates.map(([lng, lat]: [number, number]) =>
-            new window.kakao.maps.LatLng(lat, lng)
-          );
-          const polyline = new window.kakao.maps.Polyline({
-            path,
-            strokeWeight: 7,
-            strokeColor: heatScoreToColor(heatScore),
-            strokeOpacity: 0.9,
-            strokeStyle: 'solid',
-          });
-          polyline.setMap(map);
-          overlaysRef.current.push(polyline);
-        });
-
-        // Shelter markers from real data
-        (route.shelters ?? []).forEach((shelter: any) => {
-          const position = new window.kakao.maps.LatLng(shelter.lat, shelter.lng);
-          const content = `<div style="background:#FFD700;border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.2)">🏠</div>`;
-          const overlay = new window.kakao.maps.CustomOverlay({ position, content, map, yAnchor: 1 });
-          overlaysRef.current.push(overlay);
-        });
-
         // Start/End markers
         // const startPos = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
         // const endPos = new window.kakao.maps.LatLng(route.end[0], route.end[1]);
@@ -222,7 +203,7 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
         // overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: startPos, content: startContent, map, yAnchor: 1 }));
         // overlaysRef.current.push(new window.kakao.maps.CustomOverlay({ position: endPos, content: endContent, map, yAnchor: 1 }));
 
-        
+        setMapLoadStatus('ready');
       });
     }
 
@@ -240,12 +221,30 @@ function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: RouteInfo
     script.async = true;
     script.defer = true;
     script.addEventListener('load', initMap);
-    script.addEventListener('error', () => console.error('Kakao Maps 로드 실패. API 키를 확인해주세요.'));
+    script.addEventListener('error', () => {
+      console.error('Kakao Maps 로드 실패. API 키를 확인해주세요.');
+      setMapLoadStatus('error');
+    });
     document.head.appendChild(script);
     // keep script in DOM so other components can reuse SDK
   }, [apiKey]);
 
-  return <div ref={mapRef} className="w-full h-full" />;
+  return (
+    <div className="w-full h-full relative">
+      <div ref={mapRef} className="w-full h-full" />
+      {mapLoadStatus !== 'ready' && (
+        <div
+          className="absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold shadow-lg"
+          style={{
+            background: mapLoadStatus === 'error' ? 'rgba(255, 230, 230, 0.95)' : 'rgba(255, 255, 255, 0.92)',
+            color: mapLoadStatus === 'error' ? '#C0392B' : '#1A3A5C',
+          }}
+        >
+          {mapLoadStatus === 'error' ? '카카오맵 로드 실패' : '카카오맵 로딩 중'}
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface MapDetailScreenProps {

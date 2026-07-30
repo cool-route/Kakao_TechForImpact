@@ -60,4 +60,11 @@ http://127.0.0.1:8000
 - 라우팅 정책: `docs/ROUTING_POLICY.md`
 - 추천 경로 13개 정의: `data/route_specs.json`
 - 실데이터 로더: `app/services/geojson_loader.py`
-- 라우팅 엔진: `app/services/routing.py`
+- 라우팅 엔진: `app/services/route_service.py`
+
+## STT / preset flow
+
+- 프리셋 카탈로그: `data/preset_catalog.json`
+- GPT 출력 스키마: `data/preset_output_schema.json`
+- 경로 태그 매핑: `data/route_tags.json`
+- 프롬프트 정의: `docs/PRESET_PROMPTS.md`
