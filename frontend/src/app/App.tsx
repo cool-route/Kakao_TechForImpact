@@ -24,9 +24,9 @@ export default function App() {
   const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
   
   const [recognizedText, setRecognizedText] = useState("");
+  // SearchFlow에서 확정한 최종 프리셋(태그) 상태
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
-  // frontend/.env 에 있는 VITE_KAKAO_MAPS_API_KEY 를 불러옵니다.
   const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
   return (
@@ -41,7 +41,6 @@ export default function App() {
         <p className="text-gray-600" style={{ fontSize: '13px', marginTop: '2px' }}>기후 기반 도보 내비게이션</p>
       </div>
 
-      {/* Phone frame */}
       <div
         style={{
           width: '390px',
@@ -77,6 +76,7 @@ export default function App() {
 
           {currentStep === 'route_list' && (
             <RouteResultScreen 
+              selectedTags={selectedTags} // API 연동을 위해 선택된 태그 전달
               onBack={() => setCurrentStep('start')}
               onSelectRoute={(route) => {
                 setSelectedRoute(route);

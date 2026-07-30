@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Clock, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { RouteInfo } from '../App';
 
 interface RouteResultScreenProps {
+  selectedTags: string[]; // SearchFlow에서 전달받은 최종 확정 프리셋
   onBack: () => void;
   onSelectRoute: (route: RouteInfo) => void;
 }
 
-export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResultScreenProps) {
+export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute }: RouteResultScreenProps) {
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,7 +19,6 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
     const lastCoords = lastFeature?.geometry?.coordinates ?? [[127.1, 37.33]];
     const lastCoord = lastCoords[lastCoords.length - 1];
     
-    // 4위까지의 테마 색상 지정
     const rankColors = ["#3A9E66", "#4A90D9", "#F5A623", "#9B59B6"];
 
     return {
@@ -28,7 +28,7 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
       name: item.name || `추천 코스 ${index + 1}`,
       distance: `${(item.distance_m / 1000).toFixed(1)}km`,
       duration: `${Math.round(item.distance_m / 1000 * 15)}분`,
-      tags: item.shelters?.length > 0 ? ['평탄', '쉼터 경유'] : ['기본 경로'],
+      tags: item.tags || ['평탄'], // 백엔드 추천 근거 태그 매핑
       start: [firstCoord[1], firstCoord[0]] as [number, number],
       end: [lastCoord[1], lastCoord[0]] as [number, number],
       geojson: item.geojson,
@@ -36,21 +36,45 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
     };
   };
 
+  // =====================================================================
+  // [기능 추가 예정] 3. 알고리즘 기반 경로 추천 (POST /recommend)
+  // 확정된 프리셋 배열을 백엔드로 전송하여 Top 3(또는 4) 경로를 반환받습니다.
+  // =====================================================================
+  /*
+  const fetchRecommendedRoutes = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags: selectedTags })
+      });
+      const data = await res.json();
+      setRoutes(data.slice(0, 4).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
+    } catch (err) {
+      console.error("추천 경로 로드 실패", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  */
+
   useEffect(() => {
     const fetchRoutes = async () => {
+      // fetchRecommendedRoutes(); // API 연동 시 주석 해제 후 아래 기존 로직 삭제
+
+      // 임시 Mock 로직 (기존 기능 유지)
       setIsLoading(true);
       try {
         const res = await fetch('/routes');
         if (res.ok) {
           const data = await res.json();
-          // 데이터를 4개까지 가져오도록 수정
           setRoutes(data.slice(0, 4).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
         } else {
-          // Mock 데이터도 4개로 확장
           setRoutes([
-            { id: 1, rank: 1, name: "시민한길 A코스", distance: "2.1km", duration: "30분", tags: ["평탄", "반려동물"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3A9E66" },
-            { id: 2, rank: 2, name: "시민한길 B코스", distance: "3.1km", duration: "38분", tags: ["약간 언덕", "뷰 좋음"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#4A90D9" },
-            { id: 3, rank: 3, name: "올림픽공원 산책로", distance: "2.8km", duration: "35분", tags: ["잔디", "그늘"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#F5A623" },
+            { id: 1, rank: 1, name: "시민한길 A코스", distance: "2.1km", duration: "30분", tags: ["시원한길", "반려동물"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3A9E66" },
+            { id: 2, rank: 2, name: "강가 그늘길 코스", distance: "2.3km", duration: "32분", tags: ["그늘", "뷰 좋음"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#4A90D9" },
+            { id: 3, rank: 3, name: "숲속 산책길 코스", distance: "1.9km", duration: "28분", tags: ["잔디", "그늘"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#F5A623" },
             { id: 4, rank: 4, name: "탄천 수변길", distance: "3.5km", duration: "45분", tags: ["수변", "바람"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#9B59B6" },
           ]);
         }
@@ -61,54 +85,39 @@ export default function RouteResultScreen({ onBack, onSelectRoute }: RouteResult
       }
     };
     fetchRoutes();
-  }, []);
+  }, [selectedTags]);
 
   return (
     <div className="w-full h-full bg-[#F5F7F5] pt-4 px-4 pb-6 flex flex-col">
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={onBack} className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 bg-white shadow-sm">
-          <ArrowLeft size={18} color="#333" />
-        </button>
-        <div>
-          <h2 className="text-xl font-black text-gray-800">경로 추천 완료!</h2>
-          <p className="text-sm text-gray-500">당신을 위한 경로 TOP 4</p>
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-lg font-black text-gray-800">경로 추천 완료!</h2>
       </div>
 
       <div className="bg-[#E8F5E9] p-4 rounded-xl w-full text-center mb-6 shadow-sm">
-        <p className="text-sm font-bold text-gray-700">🎉 경로 추천이 완료되었어요!</p>
+        <p className="text-[15px] font-bold text-gray-800">🎉 경로 추천이 완료되었어요!</p>
         <p className="text-xs text-gray-500 mt-1">마음에 드는 경로를 선택해 미리보기를 확인해보세요</p>
       </div>
 
       <div className="flex-1 overflow-y-auto flex flex-col gap-3 pb-6" style={{ scrollbarWidth: 'none' }}>
+        <p className="text-sm font-bold text-gray-600 mb-1">당신을 위한 추천 경로 TOP 4</p>
         {isLoading ? (
           <div className="flex justify-center items-center h-full text-gray-500 text-sm font-bold">경로 불러오는 중...</div>
         ) : (
-          routes.map(route => (
+          routes.map((route, i) => (
             <button
               key={route.id}
               onClick={() => onSelectRoute(route)}
-              className="bg-white border-[1.5px] border-[#A5D6A7] rounded-2xl p-4 text-left active:scale-[0.98] transition-transform shadow-sm flex-shrink-0"
+              className="bg-white border-[1.5px] border-[#E8F5E9] rounded-2xl p-4 text-left active:scale-[0.98] transition-transform shadow-sm flex items-center justify-between"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: route.rankColor }}>
-                  {route.rank}위
-                </span>
-                <span className="text-lg font-bold text-gray-800">{route.name}</span>
+              <div>
+                <p className="text-xs text-gray-500 font-bold mb-1">경로 {i + 1}</p>
+                <p className="text-lg font-bold text-gray-800 mb-2">{route.name}</p>
+                <div className="flex gap-2 text-sm text-gray-600 font-medium">
+                  <span>⏱ {route.duration}</span>
+                  <span>📏 {route.distance}</span>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-3 text-sm text-gray-600 mb-3 font-medium">
-                <div className="flex items-center gap-1"><MapPin size={14} color="#9BB5D0" /> {route.distance}</div>
-                <div className="flex items-center gap-1"><Clock size={14} color="#9BB5D0" /> {route.duration}</div>
-              </div>
-
-              <div className="flex gap-1.5">
-                {route.tags.map(tag => (
-                  <span key={tag} className="bg-[#F0F8FF] text-[#4A90D9] text-xs font-bold px-2 py-1 rounded-full">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
+              <ArrowLeft size={16} color="#9BB5D0" className="transform rotate-180" />
             </button>
           ))
         )}
