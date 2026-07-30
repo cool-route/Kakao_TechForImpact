@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cool-route.local/schemas/preset-output-schema.json",
+  "title": "PresetExtractionOutput",
+  "description": "STT 텍스트를 GPT가 프리셋으로 변환할 때 사용하는 출력 스키마",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["intent", "base_presets", "sub_presets", "confidence", "needs_confirmation"],
+  "properties": {
+    "intent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "사용자 의도를 짧게 요약한 문장"
+    },
+    "base_presets": {
+      "type": "array",
+      "description": "카탈로그에서 선택된 기본 프리셋 최대 3개",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/presetItem"
+      }
+    },
+    "sub_presets": {
+      "type": "array",
+      "description": "카탈로그에서 선택된 서브 프리셋 최대 2개",
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/presetItem"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "전체 추출 신뢰도"
+    },
+    "needs_confirmation": {
+      "type": "boolean",
+      "description": "의도가 모호해서 사용자 확인이 필요한지 여부"
+    },
+    "reasons": {
+      "type": "array",
+      "description": "각 프리셋 선택 이유를 짧게 적은 목록",
+      "items": {
+        "$ref": "#/$defs/reasonItem"
+      }
+    },
+    "unmatched_tokens": {
+      "type": "array",
+      "description": "카탈로그에 매핑되지 않은 표현들",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "presetItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "category"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "description": "preset_catalog.json의 category 이름"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["stt", "manual", "ai"],
+          "description": "프리셋이 어디서 들어왔는지"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "개별 프리셋 선택 신뢰도"
+        }
+      }
+    },
+    "reasonItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preset_id", "reason"],
+      "properties": {
+        "preset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

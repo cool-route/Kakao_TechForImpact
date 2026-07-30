@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from pathlib import Path  # 경로 계산을 위해 내장 라이브러리 추가
+from pathlib import Path 
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,6 +42,8 @@ def healthcheck() -> dict[str, str]:
 
 app.include_router(route_router)
 
-# 2. 계산된 절대 경로를 문자열(str)로 변환하여 적용합니다.
-app.mount("/", StaticFiles(directory=str(FRONTEND_DIST_DIR), html=True), name="frontend")
-# app.mount("/", StaticFiles(directory=str(BASE_DIR / "kakaomap_test"), html=True), name="testingFrontend")
+BASE_DIR = Path(__file__).resolve().parents[1]
+FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
+# app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")

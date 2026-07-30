@@ -36,6 +36,19 @@
 
 ---
 
+## 🆕 최근 업데이트
+
+- 기존 `data/presets.json` 는 Heat Score 계산용 가중치 파일로 유지했습니다.
+- 새 프리셋 체계를 별도 파일로 분리했습니다.
+  - `data/preset_catalog.json` — STT와 프리셋 수정 UI에서 쓰는 허용 프리셋 마스터 목록
+  - `data/route_tags.json` — 사전 생성된 경로별 태그 매핑
+  - `data/preset_output_schema.json` — GPT가 프리셋을 추출할 때 사용하는 JSON 스키마
+- 프롬프트 정의 문서를 추가했습니다.
+  - `docs/PRESET_PROMPTS.md` — 시스템 프롬프트, 사용자 프롬프트, 재시도 프롬프트, OpenAI API messages 예시
+- 음성 입력 흐름은 `STT -> GPT 프리셋 추출 -> 사용자 확인/수정 -> 태그 기반 경로 추천` 순서로 정리했습니다.
+
+---
+
 ## 📅 Week 1 — 환경 세팅 + 데이터 파악
 
 난이도: ⭐⭐
@@ -78,7 +91,7 @@
 
 - [ ]  기후 데이터 좌표 → 수지구 도로 노드에 공간 조인 (GeoPandas `sjoin`)
 - [ ]  Heat Score 공식 코드 구현: `Score = (w1×온도) + (w2×UV) - (w3×음영) - (w4×바람)`
-- [ ]  프리셋 3종 가중치 파일 작성 (`presets.json`) — 노약자 / 반려동물 / 일반
+- [ ]  프리셋 3종 가중치 파일 작성 (`presets.json`) — 기존 Heat Score 가중치 유지
 - [ ]  노드별 Score 계산 결과 → `nodes_with_score.geojson` 출력
 - [ ]  B에게 GeoJSON 전달 (Week 2 중반까지 필수)
 
@@ -397,6 +410,7 @@ python3 run_server.py
 - 라우팅 정책 -> `docs/ROUTING_POLICY.md`
 - 배포 문서 -> `docs/DEPLOYMENT.md`
 - 팀 전달 문서 -> `docs/TEAM_HANDOFF.md`
+- 프롬프트 정의 -> `docs/PRESET_PROMPTS.md`
 - 추천 경로 정의 -> `data/route_specs.json`
 - 샘플 데이터 -> `data/sample/nodes_with_score.geojson`, `data/sample/shelters.json`
 
@@ -411,5 +425,11 @@ python3 -m pytest
 ```bash
 python3 scripts/validate_inputs.py
 ```
+
+최근 추가한 프리셋 관련 파일:
+
+- `data/preset_catalog.json`
+- `data/route_tags.json`
+- `data/preset_output_schema.json`
 
 현재 `/route`, `/routes` 응답에는 `"is_dummy": true`가 포함됩니다. A의 `nodes_with_score.geojson`을 `data/geojson/nodes_with_score.geojson`에 넣으면 `/route`는 자동으로 해당 파일을 우선 사용합니다.
