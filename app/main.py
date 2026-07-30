@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,5 +38,8 @@ def healthcheck() -> dict[str, str]:
 
 app.include_router(route_router)
 
-app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
+BASE_DIR = Path(__file__).resolve().parents[1]
+FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
 # app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")

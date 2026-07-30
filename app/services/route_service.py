@@ -16,6 +16,10 @@ from app.services.route_geojson import to_feature_collection, unique_shelters
 _recommended_routes_cache: dict[str, list[dict]] = {}
 
 
+def _normalize_heat_score_avg(value: float) -> float:
+    return round(max(value, 0.001), 3)
+
+
 def shortest_cool_route(mode: str, start: Coordinate, end: Coordinate) -> dict:
     if mode not in MODES:
         raise ValueError(f"Unsupported mode: {mode}")
@@ -32,7 +36,7 @@ def shortest_cool_route(mode: str, start: Coordinate, end: Coordinate) -> dict:
 
     return {
         "path": to_feature_collection(graph, edges, edge_attrs, mode),
-        "heat_score_avg": round(heat_score_avg, 3),
+        "heat_score_avg": _normalize_heat_score_avg(heat_score_avg),
         "distance_m": round(distance_m, 1),
         "shelters": shelters,
         "is_dummy": is_dummy,
@@ -136,7 +140,7 @@ def _build_route_from_files(
         "id": route_id,
         "name": _make_route_name(edges_path.stem),
         "mode": "노약자",
-        "heat_score_avg": heat_score_avg,
+        "heat_score_avg": _normalize_heat_score_avg(heat_score_avg),
         "distance_m": round(total_dist, 1),
         "geojson": {"type": "FeatureCollection", "features": features},
         "shelters": shelters,
