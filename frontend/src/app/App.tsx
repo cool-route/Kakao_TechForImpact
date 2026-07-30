@@ -1,143 +1,111 @@
-import { useState } from 'react';
-import { MainScreen } from './components/MainScreen';
-import { RouteListScreen } from './components/RouteListScreen';
-import type { RouteInfo } from './components/RouteListScreen';
-import { MapDetailScreen } from './components/MapDetailScreen';
+import { useState, useRef, useEffect } from 'react';
+import SearchFlow from './components/SearchFlow';
+import RouteResultScreen from './components/RouteResultScreen';
+import MapPreviewScreen from './components/MapPreviewScreen';
 
-type AppScreen = 'main' | 'routeList' | 'mapDetail';
-// healthcheck api
-// type HealthStatus = {
-//   status: 'idle' | 'loading' | 'success' | 'error';
-//   message: string;
-// };
+export type Step = 'start' | 'voice_input' | 'voice_confirm' | 'analyzing' | 'preset' | 'searching' | 'route_list' | 'map_preview';
+export type TagItem = { id: string; label: string; originalType: 'selected' | 'recommended' };
+
+export interface RouteInfo {
+  id: number;
+  rank: number;
+  rankColor: string;
+  name: string;
+  distance: string;
+  duration: string;
+  tags: string[];
+  start: [number, number];
+  end: [number, number];
+  geojson: any;
+  shelters: any[];
+}
 
 export default function App() {
-  const [screen, setScreen] = useState<AppScreen>('main');
+  const [currentStep, setCurrentStep] = useState<Step>('start');
   const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
-  const [mode, setMode] = useState<'general' | 'elderly' | 'dog'>('general');
-  const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
-  // heathcheck api
-  // const [healthStatus, setHealthStatus] = useState<HealthStatus>({ status: 'idle', message: '대기 중...' });
-  // const checkServerHealth = async () => {
-  //   setHealthStatus({ status: 'loading', message: '요청 중...' });
-  //   try {
-  //     const res = await fetch('http://127.0.0.1:8000/healthcheck');
-  //     if (res.ok) {
-  //       const data = await res.json();
-  //       setHealthStatus({ status: 'success', message: `✅ 성공! 백엔드 상태: ${data.status}` });
-  //     } else {
-  //       setHealthStatus({ status: 'error', message: `❌ HTTP 에러: ${res.status}` });
-  //     }
-  //   } catch (err) {
-  //     setHealthStatus({ status: 'error', message: '⚠️ 연결 실패 (서버가 켜져 있는지 확인하세요)' });
-  //     console.error('Healthcheck Error:', err);
-  //   }
-  // };
+  const prevStepRef = useRef<Step>('start');
+  useEffect(() => {
+    prevStepRef.current = currentStep;
+  }, [currentStep]);
+  
+  const [recognizedText, setRecognizedText] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const [activeTags, setActiveTags] = useState<TagItem[]>([]);
+  const [inactiveTags, setInactiveTags] = useState<TagItem[]>([]);
+  
+  const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center gap-4 p-4"
-      style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)' }}
     >
-      {/* App title */}
-      <div className="text-center">
-        <h1 className="text-white" style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px' }}>
+      <div className="text-center mb-2">
+        <h1 className="text-gray-800" style={{ fontSize: '28px', fontWeight: '800' }}>
           🍃 시원한길 🍃
         </h1>
-        <p className="text-white/70" style={{ fontSize: '13px', marginTop: '2px' }}>기후 기반 도보 내비게이션</p>
+        <p className="text-gray-600" style={{ fontSize: '15px', marginTop: '4px' }}>기후 기반 도보 내비게이션</p>
       </div>
 
-      {/* healthcheck api ui */}
-      {/* <div className="flex flex-col items-center gap-2 mb-2 w-full max-w-[390px]">
-        <button
-          onClick={checkServerHealth}
-          className="flex items-center gap-2 rounded-xl px-4 py-2 transition-all active:scale-95"
-          style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)' }}
-        >
-          <span style={{ fontSize: '13px', color: 'white', fontWeight: '600' }}>
-            ⚙️ 백엔드 연동 테스트
-          </span>
-        </button>
-        {healthStatus.status !== 'idle' && (
-          <div 
-            style={{ 
-              fontSize: '12px', 
-              fontWeight: '600',
-              color: healthStatus.status === 'success' ? '#A7F3D0' : healthStatus.status === 'error' ? '#FECACA' : '#FDE68A',
-              textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-            }}
-          >
-            {healthStatus.message}
-          </div>
-        )}
-      </div> */}
-
-      {/* Phone frame */}
       <div
         style={{
           width: '390px',
           height: '844px',
           borderRadius: '44px',
           overflow: 'hidden',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1), inset 0 0 0 2px rgba(255,255,255,0.05)',
+          boxShadow: '0 30px 80px rgba(0,0,0,0.2)',
           border: '8px solid #1A1A2E',
           position: 'relative',
-          background: '#fff',
+          background: '#F5F7F5',
           flexShrink: 0,
         }}
       >
-        {/* Side buttons (decorative) */}
-        <div style={{ position: 'absolute', left: '-10px', top: '120px', width: '4px', height: '32px', background: '#1A1A2E', borderRadius: '2px 0 0 2px' }} />
-        <div style={{ position: 'absolute', left: '-10px', top: '165px', width: '4px', height: '56px', background: '#1A1A2E', borderRadius: '2px 0 0 2px' }} />
-        <div style={{ position: 'absolute', left: '-10px', top: '235px', width: '4px', height: '56px', background: '#1A1A2E', borderRadius: '2px 0 0 2px' }} />
-        <div style={{ position: 'absolute', right: '-10px', top: '185px', width: '4px', height: '80px', background: '#1A1A2E', borderRadius: '0 2px 2px 0' }} />
-
-        {/* Dynamic Island */}
         <div style={{ position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)', width: '126px', height: '37px', background: '#000', borderRadius: '20px', zIndex: 100 }} />
+        <div className="absolute top-0 left-0 right-0 px-6 pt-4 flex justify-between items-center z-50 pointer-events-none">
+          <span className="text-sm font-bold text-gray-800">9:41</span>
+          <div className="flex gap-1">
+            <div className="w-5 h-3.5 bg-gray-800 rounded-sm"></div>
+            <div className="w-7 h-3.5 border border-gray-800 rounded-sm p-0.5"><div className="w-5 h-full bg-green-500 rounded-sm"></div></div>
+          </div>
+        </div>
 
-        {/* Screen content */}
-        <div className="w-full h-full">
-          {screen === 'main' && (
-            <MainScreen
-              selectedMode={mode}
-              onModeChange={setMode}
-              onNavigateToRoutes={() => setScreen('routeList')}
+        <div className="w-full h-full relative pt-12">
+          {['start', 'voice_input', 'voice_confirm', 'analyzing', 'preset', 'searching'].includes(currentStep) && (
+            <SearchFlow 
+              step={currentStep as any} 
+              setStep={setCurrentStep}
+              recognizedText={recognizedText}
+              setRecognizedText={setRecognizedText}
+              setSelectedTags={setSelectedTags}
+              activeTags={activeTags}
+              setActiveTags={setActiveTags}
+              inactiveTags={inactiveTags}
+              setInactiveTags={setInactiveTags}
             />
           )}
-          {screen === 'routeList' && (
-            <RouteListScreen
-              mode={mode}
-              onBack={() => setScreen('main')}
-              onSelectRoute={route => {
+
+          {currentStep === 'route_list' && (
+            <RouteResultScreen 
+              selectedTags={selectedTags}
+              onBack={() => setCurrentStep('preset')}
+              onSelectRoute={(route) => {
                 setSelectedRoute(route);
-                setScreen('mapDetail');
+                setCurrentStep('map_preview');
               }}
+              disableAnimation={prevStepRef.current === 'map_preview'}
             />
           )}
-          {screen === 'mapDetail' && selectedRoute && (
-            <MapDetailScreen
+
+          {currentStep === 'map_preview' && selectedRoute && (
+            <MapPreviewScreen 
               route={selectedRoute}
-              onBack={() => setScreen('routeList')}
               kakaoApiKey={kakaoApiKey}
+              onBack={() => setCurrentStep('route_list')}
             />
           )}
         </div>
-      </div>
-
-      {/* Screen indicators */}
-      <div className="flex gap-2 items-center">
-        {(['main', 'routeList', 'mapDetail'] as AppScreen[]).map((s) => (
-          <div
-            key={s}
-            className="rounded-full transition-all"
-            style={{
-              width: screen === s ? '24px' : '8px',
-              height: '8px',
-              background: screen === s ? 'white' : 'rgba(255,255,255,0.4)',
-            }}
-          />
-        ))}
       </div>
     </div>
   );
