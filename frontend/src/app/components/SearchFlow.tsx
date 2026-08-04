@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Mic, Check, X, Plus, ArrowLeft } from 'lucide-react';
+import { Mic, Check, X, Plus, ArrowLeft, Search } from 'lucide-react';
 import type { Step, TagItem } from '../App';
 
 interface SearchFlowProps {
@@ -57,16 +57,14 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   const startSTTService = async () => {
     // startRealSTT(); // API 연동 시 주석 해제
 
-    // 임시 Mock 로직 (기존 기능 유지)
+    // 임시 Mock 로직
     voiceTimeout.current = setTimeout(() => {
-      setRecognizedText("강아지랑 30분 정도 시원한 그늘 길을 걷고 싶어요.");
+      setRecognizedText("강아지와 함께 30분 정도 시민한길을 걷고 싶어요!");
       setStep('voice_confirm');
     }, 2000);
   };
 
-  const stopSTTService = () => {
-    // stopRealSTT(); // API 연동 시 주석 해제
-  };
+  const stopSTTService = () => {};
 
   const handleStartVoice = () => {
     setStep('voice_input');
@@ -114,13 +112,13 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
     setTimeout(() => {
       if (activeTags.length === 0 && inactiveTags.length === 0) {
         setActiveTags([
-          { id: '1', label: '시원한길', originalType: 'selected' },
+          { id: '1', label: '시민한길', originalType: 'selected' },
           { id: '2', label: '30분', originalType: 'selected' },
           { id: '3', label: '반려동물', originalType: 'selected' },
         ]);
         setInactiveTags([
-          { id: '4', label: '쉼터많음', originalType: 'recommended' },
-          { id: '5', label: '평지', originalType: 'recommended' },
+          { id: '4', label: '살리라산', originalType: 'recommended' },
+          { id: '5', label: '청지', originalType: 'recommended' },
         ]);
       }
       setStep('preset');
@@ -153,147 +151,180 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
     }
   };
 
+  // 1. 태그 크기 조절 (text-[20px], px-5 py-3으로 축소하여 한 화면에 더 잘 들어오게 조정)
   const renderTag = (tag: TagItem, currentZone: 'active' | 'inactive') => {
     const isOriginalSelected = tag.originalType === 'selected';
-    const bgClass = isOriginalSelected ? 'bg-[#3A9E66] text-white' : 'bg-white text-[#3A9E66] border border-[#3A9E66]';
+    const bgClass = isOriginalSelected ? 'bg-[#1E88E5] text-white' : 'bg-white text-[#1E88E5] border-2 border-[#1E88E5]';
     return (
       <button
         key={tag.id}
         onClick={() => toggleTag(tag, currentZone)}
-       className={`flex items-center gap-2 px-5 py-3 rounded-full text-xl font-bold shadow-md transition-transform active:scale-95 ${bgClass}`}
-    >
-      #{tag.label} {currentZone === 'active' ? <X size={22} /> : <Plus size={22} />}
+        className={`flex items-center gap-2.5 px-5 py-3 rounded-full text-[20px] font-bold shadow-md transition-transform active:scale-95 ${bgClass}`}
+      >
+        #{tag.label} {currentZone === 'active' ? <X size={24} /> : <Plus size={24} />}
       </button>
     );
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center">
+    <div className="w-full h-full flex flex-col items-center bg-[#FFFFFF] relative">
       <style>{`
         @keyframes popIn {
           0% { opacity: 0; transform: scale(0.95) translateY(10px); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         .animate-pop-in { animation: popIn 0.3s ease-out forwards; }
-        
-        @keyframes fadeOutMsg {
-          0% { opacity: 0; transform: translateY(10px); }
-          10% { opacity: 1; transform: translateY(0); }
-          70% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0; transform: translateY(-10px); display: none; }
-        }
-        .animate-fade-out-msg { animation: fadeOutMsg 2.5s forwards; }
       `}</style>
-      <div className="w-full h-40 bg-[#DDF4E4] relative mb-6 shrink-0 mt-2 rounded-t-[32px]">
-        <div className="absolute top-10 left-8 w-14 h-14 bg-[#FFD54F] rounded-full"></div>
-        <div className="absolute top-10 left-24 w-24 h-10 bg-white rounded-full opacity-80"></div>
-        <div className="absolute bottom-0 w-full h-12 bg-[#A5D6A7]">
-          <div className="w-24 h-full bg-[#D7B882] mx-auto"></div>
-        </div>
-      </div>
 
-      {(step === 'start' || step === 'voice_input' || step === 'voice_confirm') && (
-        <div className="flex-1 w-full px-6 flex flex-col items-center h-full pb-8">
-          
-          <div className="w-full flex flex-col items-center">
-            <p className="text-[#3A9E66] font-extrabold text-xl mb-3">🌿 산책 도우미</p>
-            <h2 className="text-4xl font-black text-gray-800 text-center leading-snug">
-              오늘은 어떤 길을<br/>산책할까요?
-            </h2>
-          </div>
-
-          <div className="flex-1 w-full relative flex flex-col items-center justify-center mt-6">
-            <div className={`absolute top-4 w-full transition-all duration-700 ease-out z-10 ${step === 'voice_confirm' ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90 pointer-events-none'}`}>
-              <div className="bg-[#E8F5E9] p-8 rounded-3xl w-full shadow-md">
-                <p className="text-2xl text-gray-800 font-bold leading-relaxed text-center break-keep">{recognizedText || "인식 중..."}</p>
-              </div>
-            </div>
-            <div className={`absolute transition-all duration-[350ms] ease-in-out z-20 flex items-center justify-center
-                ${step === 'start' ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-3rem)] h-24' :
-                  step === 'voice_input' ? 'top-4 left-1/2 -translate-x-1/2 -translate-y-0 w-40 h-40' :
-                  'top-8 left-1/2 -translate-x-1/2 -translate-y-0 w-0 h-0 opacity-0 scale-0'}`}
-            >
-              <button 
-                onClick={step === 'start' ? handleStartVoice : undefined} 
-                className={`w-full h-full bg-[#3A9E66] flex items-center justify-center text-white shadow-lg overflow-hidden transition-all duration-[350ms] 
-                ${step === 'start' ? 'rounded-2xl' : 'rounded-full pointer-events-none'} 
-                ${step === 'voice_input' ? 'shadow-[0_0_40px_rgba(111,207,151,0.6)] animate-[pulse_1.5s_ease-in-out_infinite]' : ''}`}
-              >
-                 <Mic size={step === 'start' ? 36 : 56} className="shrink-0 flex-none" />
-                 <span className={`font-bold text-2xl ml-3 whitespace-nowrap transition-all duration-300 ${step === 'start' ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'}`}>
-                    시작하기
-                 </span>
-              </button>
-            </div>
-            <div className={`absolute top-[90%] flex flex-col items-center transition-all duration-250 z-10 ${step === 'voice_input' ? 'opacity-100 translate-y-0 delay-150' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
-                <div className="flex gap-1.5 items-center justify-center h-10 mb-3">
-                   <div className="w-1.5 bg-[#3A9E66] rounded-full animate-bounce h-4" style={{ animationDelay: '0.0s' }}></div>
-                   <div className="w-1.5 bg-[#3A9E66] rounded-full animate-bounce h-7" style={{ animationDelay: '0.2s' }}></div>
-                   <div className="w-1.5 bg-[#3A9E66] rounded-full animate-bounce h-5" style={{ animationDelay: '0.4s' }}></div>
-                   <div className="w-1.5 bg-[#3A9E66] rounded-full animate-bounce h-8" style={{ animationDelay: '0.1s' }}></div>
-                   <div className="w-1.5 bg-[#3A9E66] rounded-full animate-bounce h-6" style={{ animationDelay: '0.3s' }}></div>
-                </div>
-                <p className="text-xl font-bold text-[#3A9E66] animate-pulse">🎙 열심히 듣고 있어요...</p>
-            </div>
-          </div>
-          <div className="w-full relative h-40 mt-4">
-              <button
-                  onClick={handleStopVoice}
-                  className={`absolute bottom-0 w-full px-10 py-6 bg-[#FFEAEA] text-[#FF4B4B] rounded-2xl font-bold text-2xl shadow-sm active:scale-95 transition-all duration-500 ${step === 'voice_input' ? 'opacity-100 translate-y-0 pointer-events-auto delay-300' : 'opacity-0 translate-y-10 pointer-events-none'}`}
-              >
-                  ⏹ 입력 종료
-              </button>
-              <div className={`absolute bottom-0 w-full flex flex-col gap-4 transition-all duration-700 ease-out ${step === 'voice_confirm' ? 'opacity-100 translate-y-0 pointer-events-auto delay-300' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
-                  <button onClick={handleConfirmVoice} className="w-full bg-[#0047AB] text-white py-6 rounded-2xl font-bold text-2xl flex justify-center items-center gap-2 shadow-sm active:bg-[#003380] transition-colors">
-                      ✓ 확인
-                  </button>
-                  <button onClick={handleStartVoice} className="w-full bg-[#3A9E66] text-white py-6 rounded-2xl font-bold text-2xl flex justify-center items-center gap-2 shadow-sm active:bg-[#2F8152] transition-colors">
-                      🔄 다시 말하기
-                  </button>
-              </div>
-          </div>
-        </div>
-      )}
-
-      {(step === 'analyzing' || step === 'searching') && (
-        <div className="flex-1 w-full px-6 flex flex-col items-center mt-16 animate-pop-in">
-          <div className="w-36 h-36 bg-white rounded-full border-8 border-[#3A9E66] border-t-transparent animate-spin mb-10 flex items-center justify-center shadow-md">
-            <div className="w-20 h-20 bg-gray-200 rounded-full animate-none" />
-          </div>
-          <h2 className="text-3xl font-black text-gray-800 text-center mb-6 leading-snug break-keep">
-            {step === 'analyzing' ? '당신의 말을 분석해서\n프리셋을 만들고 있어요!' : '당신에게 딱 맞는\n경로를 찾고 있어요!'}
+      {/* ① 첫 화면 */}
+      {step === 'start' && (
+        <div className="flex-1 w-full px-6 flex flex-col pt-16 pb-12 animate-pop-in">
+          {/* 2. 문구 수정 반영 */}
+          <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-8">
+            오늘은 어떤 시원한 길을<br/>걸을까요?
           </h2>
-          <p className="text-xl text-gray-500 mb-10 font-bold">잠시만 기다려 주세요</p>
+          <div className="bg-[#EBF5FF] p-10 rounded-[32px] text-center mb-8 shadow-sm">
+            <p className="text-[#1E40AF] font-bold text-[22px] leading-relaxed">
+              음성으로<br/>원하는 산책 조건을<br/>말해주세요
+            </p>
+          </div>
+          <button onClick={handleStartVoice} className="w-full bg-[#3B82F6] text-white py-6 rounded-2xl font-bold text-[24px] shadow-md active:bg-blue-600 transition-colors mb-10">
+            시작하기
+          </button>
+          
+          <div className="flex flex-col gap-4 mt-auto">
+            <div className="bg-[#F0F7FF] text-[#1E3A8A] px-6 py-5 rounded-2xl text-[16px] font-bold shadow-sm break-keep leading-relaxed text-center">
+              "반려견이랑 한낮에 산책하려는데 발바닥이 걱정돼"
+            </div>
+            <div className="bg-[#F0F7FF] text-[#1E3A8A] px-6 py-5 rounded-2xl text-[16px] font-bold shadow-sm break-keep leading-relaxed text-center">
+              "할머니랑 짧게 경치 좋은 곳을 걷고 싶어"
+            </div>
+          </div>
         </div>
       )}
 
-      {step === 'preset' && (
-        <div className="absolute inset-0 bg-white z-20 flex flex-col pt-20 pb-6 px-6 animate-pop-in">
-          <div className="absolute top-6 left-6 z-30">
-            <button onClick={() => { setRecognizedText(""); setStep('start'); }} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform border border-gray-100">
-              <ArrowLeft size={24} color="#333" />
+      {/* ② 음성 입력 중 */}
+      {step === 'voice_input' && (
+        <div className="flex-1 w-full px-6 flex flex-col items-center pt-10 pb-8 animate-pop-in">
+          {/* 2. 문구 수정 반영 */}
+          <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-10">
+            오늘은 어떤 시원한 길을<br/>걸을까요?
+          </h2>
+          <div className="relative flex items-center justify-center w-40 h-40 mb-8 mt-4">
+            <div className="absolute inset-0 bg-[#3B82F6] rounded-full opacity-10 animate-ping"></div>
+            <div className="absolute inset-4 bg-[#3B82F6] rounded-full opacity-30 animate-pulse"></div>
+            <div className="absolute inset-8 bg-[#3B82F6] rounded-full flex items-center justify-center shadow-lg">
+              <Mic size={52} color="#FFF" />
+            </div>
+          </div>
+          
+          <div className="flex gap-2 items-center justify-center h-14 mb-10">
+            <div className="w-2 bg-[#8BB4F6] rounded-full animate-bounce h-6" style={{ animationDelay: '0.0s' }}></div>
+            <div className="w-2 bg-[#8BB4F6] rounded-full animate-bounce h-10" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 bg-[#3B82F6] rounded-full animate-bounce h-14" style={{ animationDelay: '0.4s' }}></div>
+            <div className="w-2 bg-[#3B82F6] rounded-full animate-bounce h-16" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 bg-[#3B82F6] rounded-full animate-bounce h-12" style={{ animationDelay: '0.3s' }}></div>
+            <div className="w-2 bg-[#8BB4F6] rounded-full animate-bounce h-8" style={{ animationDelay: '0.5s' }}></div>
+            <div className="w-2 bg-[#8BB4F6] rounded-full animate-bounce h-5" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+
+          <div className="bg-[#F0F7FF] p-8 rounded-[32px] text-center w-full mb-auto shadow-sm">
+            <p className="text-gray-500 font-bold text-[16px] mb-3">듣고 있어요...</p>
+            <p className="text-[#1E40AF] font-bold text-[20px]">"도서관 근처 30분 코스 추천해줘"</p>
+          </div>
+          
+          <button onClick={handleStopVoice} className="w-full bg-[#FEE2E2] text-[#EF4444] py-6 rounded-2xl font-bold text-[22px] shadow-sm mt-4 active:scale-95 transition-transform">
+            입력 중지
+          </button>
+        </div>
+      )}
+
+      {/* ③ 입력 완료 */}
+      {step === 'voice_confirm' && (
+        <div className="flex-1 w-full px-6 flex flex-col items-center pt-16 pb-10 animate-pop-in">
+          {/* 2. 문구 수정 반영 */}
+          <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-12">
+            오늘은 어떤 시원한 길을<br/>걸을까요?
+          </h2>
+          <div className="bg-[#3B82F6] rounded-full p-5 mb-10 shadow-md">
+            <Check size={48} color="#FFF" strokeWidth={3} />
+          </div>
+          
+          <div className="bg-[#F0F7FF] p-8 rounded-[32px] w-full mb-8 shadow-sm flex items-center justify-center min-h-[140px]">
+             <textarea
+                value={recognizedText}
+                onChange={(e) => setRecognizedText(e.target.value)}
+                className="w-full text-[24px] text-[#1E3A8A] font-black leading-relaxed text-center break-keep bg-transparent resize-none focus:outline-none"
+                rows={3}
+              />
+          </div>
+          
+          <div className="bg-[#FEF9C3] text-[#A16207] p-5 rounded-2xl w-full text-[16px] font-bold flex items-center justify-center gap-3 mb-auto shadow-sm">
+            <span className="text-[20px]">💡</span> 문장을 눌러 직접 수정할 수 있어요!
+          </div>
+
+          <div className="flex gap-4 w-full mt-6">
+            <button onClick={handleStartVoice} className="flex-1 bg-[#F0F7FF] text-[#3B82F6] py-6 rounded-2xl font-bold text-[22px] active:scale-95 transition-transform shadow-sm">
+              다시 말하기
+            </button>
+            <button onClick={handleConfirmVoice} className="flex-1 bg-[#3B82F6] text-white py-6 rounded-2xl font-bold text-[22px] shadow-md active:scale-95 transition-transform">
+              확인
             </button>
           </div>
+        </div>
+      )}
 
-          <div className="mb-8 mt-2">
-            <p className="text-[#F5A623] font-black text-2xl flex items-center gap-2 mt-1">✨ 추천 프리셋 ✨</p>
+      {/* ④ 프리셋 추천 중 & ⑦ 경로 탐색 중 */}
+      {(step === 'analyzing' || step === 'searching') && (
+        <div className="flex-1 w-full px-6 flex flex-col items-center justify-center animate-pop-in">
+          <div className="bg-[#3B82F6] rounded-full p-8 shadow-lg mb-12 animate-pulse flex items-center justify-center">
+            <Search size={72} color="#FFF" strokeWidth={2.5} className="mr-2" />
           </div>
-          <div className="mb-6">
-            <p className="text-lg font-bold text-gray-700 mb-4">선택한 조건</p>
-            <div className="flex flex-wrap gap-2.5">{activeTags.map(tag => renderTag(tag, 'active'))}</div>
+          <h2 className="text-[32px] font-black text-gray-800 text-center mb-6 leading-tight break-keep">
+            {step === 'analyzing' ? '프리셋을 분석하고\n있어요!' : '당신에게 딱 맞는\n경로를 찾고 있어요!'}
+          </h2>
+          <p className="text-[20px] text-gray-400 font-bold mb-12 text-center leading-relaxed">
+            {step === 'analyzing' ? '당신의 말을 분석해서\n프리셋을 만들고 있어요!' : '조금만 기다려주세요...'}
+          </p>
+          <div className="flex gap-3">
+            <div className="w-4 h-4 bg-[#3B82F6] rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+            <div className="w-4 h-4 bg-[#8BB4F6] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="w-4 h-4 bg-[#D1E3FF] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
           </div>
-          <div className="mb-6 flex-1">
-            <p className="text-xl font-bold text-gray-700 mb-5">이런 조건도 있어요!</p>
-            <div className="flex flex-wrap gap-3">{inactiveTags.map(tag => renderTag(tag, 'inactive'))}</div>
+        </div>
+      )}
+
+      {/* ⑤ 프리셋 확인 및 수정 */}
+      {step === 'preset' && (
+        <div className="absolute inset-0 bg-white z-20 flex flex-col pt-6 pb-6 px-6 animate-pop-in overflow-hidden">
+          <div className="flex items-center gap-4 z-30 pt-4">
+            <button onClick={() => { setRecognizedText(""); setStep('start'); }} className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform border border-gray-100">
+              <ArrowLeft size={30} color="#333" />
+            </button>
+            <p className="text-[#1E88E5] font-black text-[26px]">추천 프리셋</p>
+          </div>
+          
+          <div className="flex-1 w-full mt-6 overflow-y-auto pb-[130px]" style={{ scrollbarWidth: 'none' }}>
+            <div className="bg-[#EBF5FF] p-6 rounded-[32px] mb-6">
+              <p className="text-[18px] font-bold text-gray-700 mb-4">선택한 조건</p>
+              <div className="flex flex-wrap gap-3">{activeTags.map(tag => renderTag(tag, 'active'))}</div>
+            </div>
+
+            <div className="bg-white border-[2.5px] border-green-50 p-6 rounded-[32px] mb-4 shadow-sm">
+              <p className="text-[20px] font-bold text-gray-700 mb-5">이런 조건도 있어요!</p>
+              <div className="flex flex-wrap gap-3">{inactiveTags.map(tag => renderTag(tag, 'inactive'))}</div>
+            </div>
           </div>
 
-          <div className={`mb-4 text-center text-[#E74C3C] font-bold text-lg bg-[#FCECEC] py-4 px-4 rounded-2xl border border-[#F5B7B1] transition-opacity duration-300 pointer-events-none ${tagError ? 'opacity-100' : 'opacity-0'}`}>
-            ⚠️ 태그는 3개까지 선택해주세요!
+          <div className="absolute bottom-8 left-6 right-6 flex flex-col z-30 pointer-events-none">
+             <div className={`mb-3 text-center text-[#E74C3C] font-bold text-[18px] bg-[#FCECEC]/95 backdrop-blur-sm py-4 px-5 rounded-2xl border border-[#F5B7B1] transition-all duration-300 ${tagError ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              태그는 3개까지 선택해주세요!
+            </div>
+            
+            <button onClick={handleSearchRoutes} className="w-full pointer-events-auto bg-[#0047AB] text-white py-6 rounded-2xl font-bold text-[24px] flex justify-center items-center gap-2 shadow-[0_10px_30px_rgba(0,71,171,0.3)] active:bg-[#003380] active:scale-[0.98] transition-transform">
+              경로 추천받기
+            </button>
           </div>
-
-          <button onClick={handleSearchRoutes} className="w-full bg-[#0047AB] text-white py-6 rounded-2xl font-bold text-2xl flex justify-center items-center gap-2 shadow-lg active:bg-[#003380] active:scale-[0.98] transition-transform">
-            경로 추천받기
-          </button>
         </div>
       )}
     </div>

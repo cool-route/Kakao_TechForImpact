@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import SearchFlow from './components/SearchFlow';
 import RouteResultScreen from './components/RouteResultScreen';
 import MapPreviewScreen from './components/MapPreviewScreen';
+import NavigatingScreen from './components/NavigatingScreen';
 
-export type Step = 'start' | 'voice_input' | 'voice_confirm' | 'analyzing' | 'preset' | 'searching' | 'route_list' | 'map_preview';
+export type Step = 'start' | 'voice_input' | 'voice_confirm' | 'analyzing' | 'preset' | 'searching' | 'route_list' | 'map_preview' | 'navigating';
 export type TagItem = { id: string; label: string; originalType: 'selected' | 'recommended' };
 
 export interface RouteInfo {
@@ -37,28 +38,29 @@ export default function App() {
   
   const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
+  const handleRestart = () => {
+    setCurrentStep('start');
+    setRecognizedText("");
+    setSelectedTags([]);
+    setActiveTags([]);
+    setInactiveTags([]);
+  };
+
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center gap-4 p-4"
-      style={{ background: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)' }}
+      className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#F5F7F5]"
+      style={{ fontFamily: 'sans-serif' }}
     >
-      <div className="text-center mb-2">
-        <h1 className="text-gray-800" style={{ fontSize: '28px', fontWeight: '800' }}>
-          🍃 시원한길 🍃
-        </h1>
-        <p className="text-gray-600" style={{ fontSize: '15px', marginTop: '4px' }}>기후 기반 도보 내비게이션</p>
-      </div>
-
       <div
         style={{
           width: '390px',
           height: '844px',
           borderRadius: '44px',
           overflow: 'hidden',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.2)',
+          boxShadow: '0 30px 80px rgba(0,0,0,0.1)',
           border: '8px solid #1A1A2E',
           position: 'relative',
-          background: '#F5F7F5',
+          background: '#FFFFFF',
           flexShrink: 0,
         }}
       >
@@ -67,7 +69,7 @@ export default function App() {
           <span className="text-sm font-bold text-gray-800">9:41</span>
           <div className="flex gap-1">
             <div className="w-5 h-3.5 bg-gray-800 rounded-sm"></div>
-            <div className="w-7 h-3.5 border border-gray-800 rounded-sm p-0.5"><div className="w-5 h-full bg-green-500 rounded-sm"></div></div>
+            <div className="w-7 h-3.5 border border-gray-800 rounded-sm p-0.5"><div className="w-5 h-full bg-[#3B82F6] rounded-sm"></div></div>
           </div>
         </div>
 
@@ -103,6 +105,15 @@ export default function App() {
               route={selectedRoute}
               kakaoApiKey={kakaoApiKey}
               onBack={() => setCurrentStep('route_list')}
+              onStartNavigating={() => setCurrentStep('navigating')}
+            />
+          )}
+
+          {currentStep === 'navigating' && selectedRoute && (
+            <NavigatingScreen 
+              route={selectedRoute}
+              kakaoApiKey={kakaoApiKey}
+              onRestart={handleRestart}
             />
           )}
         </div>
