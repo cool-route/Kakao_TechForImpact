@@ -23,7 +23,6 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   // [기능 추가 예정] 1. STT 연동 (POST /speech)
   // MediaRecorder API를 사용해 녹음된 음성을 백엔드로 보내 텍스트를 받아옵니다.
   // =====================================================================
-  /*
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
 
@@ -52,10 +51,9 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       mediaRecorder.current.stop();
     }
   };
-  */
 
   const startSTTService = async () => {
-    // startRealSTT(); // API 연동 시 주석 해제
+    startRealSTT(); // API 연동 시 주석 해제
 
     // 임시 Mock 로직
     voiceTimeout.current = setTimeout(() => {
@@ -64,7 +62,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
     }, 2000);
   };
 
-  const stopSTTService = () => {};
+  const stopSTTService = () => {stopRealSTT(); if (voiceTimeout.current) clearTimeout(voiceTimeout.current); };
 
   const handleStartVoice = () => {
     setStep('voice_input');
