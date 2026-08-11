@@ -2,165 +2,158 @@
   "schema_version": "1.0.0",
   "description": "STT 및 프리셋 편집 UI에서 사용되는 허용 프리셋 마스터 목록",
   "categories": {
-    "experience": [
+    "condition": [
       {
-        "id": "cool_path",
-        "label": "시원한길",
-        "type": "base",
-        "aliases": ["시원한 길", "덜 더운 길", "시원한 경로", "차가운 길"],
-        "weight_hint": 0.35,
+        "id": "with_elder",
+        "label": "어르신과",
         "enabled": true
       },
       {
-        "id": "shady_path",
-        "label": "그늘많음",
-        "type": "sub",
-        "aliases": ["그늘 많은 길", "그늘 많은", "나무가 많은 길"],
-        "weight_hint": 0.22,
+        "id": "with_pet",
+        "label": "반려동물과",
         "enabled": true
       },
       {
-        "id": "low_surface_temp",
-        "label": "표면온도낮음",
-        "type": "sub",
-        "aliases": ["표면온도 낮은 길", "지면이 덜 뜨거운 길", "바닥이 덜 더운 길"],
-        "weight_hint": 0.24,
+        "id": "with_stroller",
+        "label": "유아·유모차",
         "enabled": true
       },
       {
-        "id": "shelter_rich",
-        "label": "쉼터많음",
-        "type": "sub",
-        "aliases": ["쉼터가 많은 길", "무더위 쉼터가 많은 길", "쉴 곳 많은 길"],
-        "weight_hint": 0.18,
+        "id": "mobility_support",
+        "label": "휠체어·보행 보조",
         "enabled": true
       },
+      {
+        "id": "alone",
+        "label": "혼자",
+        "enabled": true
+      }
+    ],
+    "environment": [
       {
         "id": "flat_path",
-        "label": "평지",
-        "type": "sub",
-        "aliases": ["오르막 적은 길", "경사 적은 길", "평평한 길"],
-        "weight_hint": 0.16,
+        "label": "평지 위주",
+        "enabled": true
+      },
+      {
+        "id": "park_route",
+        "label": "공원 경유",
+        "enabled": true
+      },
+      {
+        "id": "water_route",
+        "label": "물길 따라 (하천·호수변)",
+        "enabled": true
+      },
+      {
+        "id": "green_path",
+        "label": "녹지 많은 길",
+        "enabled": true
+      }
+    ],
+    "heat": [
+      {
+        "id": "shady_path",
+        "label": "그늘 많은 길",
+        "enabled": true
+      },
+      {
+        "id": "indoor_path",
+        "label": "실내·지하 구간 활용",
+        "enabled": true
+      },
+      {
+        "id": "shelter_route",
+        "label": "무더위쉼터 경유",
+        "enabled": true
+      },
+      {
+        "id": "low_tmrt",
+        "label": "복사열 낮은 노면",
+        "enabled": true
+      },
+      {
+        "id": "low_heat_island",
+        "label": "열섬 영향 적은 길",
         "enabled": true
       }
     ],
     "duration": [
       {
-        "id": "walk_15m",
-        "label": "15분",
-        "type": "base",
-        "aliases": ["15분 정도", "15분 산책", "짧게 걷기"],
-        "weight_hint": 0.24,
+        "id": "walk_10m",
+        "label": "10분 이내",
         "enabled": true
       },
       {
         "id": "walk_30m",
-        "label": "30분",
-        "type": "base",
-        "aliases": ["30분 정도", "30분 산책", "반시간"],
-        "weight_hint": 0.33,
-        "enabled": true
-      },
-      {
-        "id": "walk_45m",
-        "label": "45분",
-        "type": "base",
-        "aliases": ["45분 정도", "45분 산책", "한 시간 전후"],
-        "weight_hint": 0.29,
+        "label": "30분 안팎",
         "enabled": true
       },
       {
         "id": "walk_60m",
-        "label": "60분",
-        "type": "base",
-        "aliases": ["1시간", "한 시간", "오래 걷기"],
-        "weight_hint": 0.18,
-        "enabled": true
-      }
-    ],
-    "condition": [
-      {
-        "id": "pet_friendly",
-        "label": "반려동물",
-        "type": "base",
-        "aliases": ["강아지", "반려견", "애완견", "강아지랑"],
-        "weight_hint": 0.31,
+        "label": "1시간 안팎",
         "enabled": true
       },
       {
-        "id": "elder_friendly",
-        "label": "노약자",
-        "type": "base",
-        "aliases": ["어르신", "부모님", "노인", "가족과"],
-        "weight_hint": 0.27,
-        "enabled": true
-      },
-      {
-        "id": "sun_sensitive",
-        "label": "더위민감",
-        "type": "sub",
-        "aliases": ["더위에 약한", "더운 거 싫은", "한여름"],
-        "weight_hint": 0.21,
-        "enabled": true
-      },
-      {
-        "id": "easy_walk",
-        "label": "걷기쉬움",
-        "type": "sub",
-        "aliases": ["걷기 편한", "무리 없는", "가볍게 걷는"],
-        "weight_hint": 0.15,
+        "id": "walk_120m_plus",
+        "label": "2시간 이상",
         "enabled": true
       }
     ],
     "place": [
       {
-        "id": "convenience_store",
-        "label": "편의점",
-        "type": "sub",
-        "aliases": ["편의점 들르는", "cu", "gs25", "세븐일레븐"],
-        "weight_hint": 0.12,
+        "id": "pungdeokcheon_1",
+        "label": "풍덕천1동",
         "enabled": true
       },
       {
-        "id": "rest_area",
-        "label": "쉼터",
-        "type": "sub",
-        "aliases": ["무더위 쉼터", "쉬는 곳", "휴식 공간"],
-        "weight_hint": 0.18,
+        "id": "pungdeokcheon_2",
+        "label": "풍덕천2동",
         "enabled": true
       },
       {
-        "id": "quiet_path",
-        "label": "조용한길",
-        "type": "sub",
-        "aliases": ["한적한 길", "사람 적은 길", "조용한 산책로"],
-        "weight_hint": 0.1,
+        "id": "sinbong",
+        "label": "신봉동",
         "enabled": true
       },
       {
-        "id": "park_nearby",
-        "label": "공원근처",
-        "type": "sub",
-        "aliases": ["공원 옆", "산책공원 근처", "녹지 많은"],
-        "weight_hint": 0.14,
-        "enabled": true
-      }
-    ],
-    "route_style": [
-      {
-        "id": "loop_route",
-        "label": "왕복",
-        "type": "base",
-        "aliases": ["원형 코스", "되돌아오는 길", "순환"],
-        "weight_hint": 0.13,
+        "id": "seongbok",
+        "label": "성복동",
         "enabled": true
       },
       {
-        "id": "one_way",
-        "label": "편도",
-        "type": "base",
-        "aliases": ["한 번에 가는", "직선 이동", "한 방향"],
-        "weight_hint": 0.11,
+        "id": "dongcheon",
+        "label": "동천동",
+        "enabled": true
+      },
+      {
+        "id": "sanghyeon_1",
+        "label": "상현1동",
+        "enabled": true
+      },
+      {
+        "id": "sanghyeon_2",
+        "label": "상현2동",
+        "enabled": true
+      },
+      {
+        "id": "sanghyeon_3",
+        "label": "상현3동",
+        "enabled": true
+      },
+      {
+        "id": "jukjeon_1",
+        "label": "죽전1동",
+        "enabled": true
+      },
+      {
+        "id": "jukjeon_2",
+        "label": "죽전2동",
+        "enabled": true
+      },
+      {
+        "id": "jukjeon_3",
+        "label": "죽전3동",
         "enabled": true
       }
     ]
@@ -168,8 +161,6 @@
   "selection_rules": {
     "max_base_presets": 3,
     "max_sub_presets": 2,
-    "base_categories": ["duration", "condition", "route_style"],
-    "sub_categories": ["experience", "condition", "place", "route_style"],
     "allow_duplicate_labels": false
   }
 }
