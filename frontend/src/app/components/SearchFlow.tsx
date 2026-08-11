@@ -19,94 +19,92 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   const voiceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tagErrorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // =====================================================================
-  // [기능 추가 예정] 1. STT 연동 (POST /speech)
-  // MediaRecorder API를 사용해 녹음된 음성을 백엔드로 보내 텍스트를 받아옵니다.
-  // =====================================================================
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
 
   const startRealSTT = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
-      mediaRecorder.current.ondataavailable = (e) => { audioChunks.current.push(e.data); };
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunks.current = [];
+
+      mediaRecorder.current.ondataavailable = (e) => { 
+        if (e.data.size > 0) audioChunks.current.push(e.data); 
+      };
+
       mediaRecorder.current.onstop = async () => {
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
         const formData = new FormData();
-        formData.append("audio", audioBlob);
+        formData.append("audio", audioBlob, "audio.webm");
 
-        // POST /speech API 호출
-        const res = await fetch('/speech', { method: 'POST', body: formData });
-        const data = await res.json();
-        setRecognizedText(data.text);
+        // 5초가 지나 녹음이 끝나면 바로 확인 화면으로 이동하여 로딩 메시지 표시
         setStep('voice_confirm');
-      };
-      mediaRecorder.current.start();
-    } catch (err) { console.error("마이크 권한이 필요합니다.", err); }
-  };
+        setRecognizedText("텍스트로 변환하고 있어요...");
 
-  const stopRealSTT = () => {
-    if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
-      mediaRecorder.current.stop();
+        try {
+          // 백엔드 API 호출 (FastAPI 기본 주소인 localhost:8000 기준)
+          const res = await fetch('http://localhost:8000/speech', { 
+            method: 'POST', 
+            body: formData 
+          });
+          const data = await res.json();
+          
+          if (res.ok && data.text) {
+            setRecognizedText(data.text.trim()); // 성공 시 결과 텍스트 삽입 (수정 가능)
+          } else {
+            setRecognizedText(data.error ? `오류: ${data.error}` : "음성을 인식하지 못했어요.");
+          }
+        } catch (err) {
+          console.error("STT 서버 연동 에러:", err);
+          setRecognizedText("서버와 연결할 수 없습니다.");
+        } finally {
+          // 마이크 사용 완전 종료
+          stream.getTracks().forEach(track => track.stop());
+        }
+      };
+
+      mediaRecorder.current.start();
+
+      // 정확히 5초 뒤에 자동으로 녹음 중지
+      voiceTimeout.current = setTimeout(() => {
+        if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+          mediaRecorder.current.stop();
+        }
+      }, 5000);
+
+    } catch (err) { 
+      console.error("마이크 권한이 필요합니다.", err); 
+      alert("마이크 사용 권한을 허용해주세요.");
+      setStep('start');
     }
   };
 
-  const startSTTService = async () => {
-    startRealSTT(); // API 연동 시 주석 해제
-
-    // 임시 Mock 로직
-    voiceTimeout.current = setTimeout(() => {
-      setRecognizedText("강아지와 함께 30분 정도 시민한길을 걷고 싶어요!");
-      setStep('voice_confirm');
-    }, 2000);
-  };
-
-  const stopSTTService = () => {stopRealSTT(); if (voiceTimeout.current) clearTimeout(voiceTimeout.current); };
-
   const handleStartVoice = () => {
     setStep('voice_input');
-    startSTTService();
+    startRealSTT(); // 실제 STT 함수 호출
   };
 
   const handleStopVoice = () => {
+    // 5초가 되기 전에 강제로 '입력 중지'를 누른 경우
     if (voiceTimeout.current) clearTimeout(voiceTimeout.current);
-    stopSTTService();
+    
+    if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+      mediaRecorder.current.onstop = null; // 취소 시 서버에 요청이 가지 않도록 onstop 초기화
+      mediaRecorder.current.stop();
+      mediaRecorder.current.stream.getTracks().forEach(t => t.stop());
+    }
+    
     setRecognizedText(""); 
     setStep('start');
   };
 
   // =====================================================================
   // [기능 추가 예정] 2. GPT를 활용한 프리셋 추출 (POST /preset)
-  // 사용자 텍스트를 분석하여 기본 프리셋과 서브 프리셋(JSON)을 생성합니다.
   // =====================================================================
-  /*
-  const fetchPresetsFromAI = async () => {
-    try {
-      const res = await fetch('/preset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: recognizedText })
-      });
-      const data = await res.json();
-      
-      const basePresets = data.base_presets.map((t: string, i: number) => ({ id: `base_${i}`, label: t, originalType: 'selected' }));
-      const subPresets = data.sub_presets.map((t: string, i: number) => ({ id: `sub_${i}`, label: t, originalType: 'recommended' }));
-      
-      setActiveTags(basePresets);
-      setInactiveTags(subPresets);
-      setStep('preset');
-    } catch (err) {
-      console.error("프리셋 추출 실패", err);
-    }
-  };
-  */
-
   const handleConfirmVoice = () => {
     setStep('analyzing');
-    // fetchPresetsFromAI(); // API 연동 시 주석 해제
-
-    // 임시 Mock 로직 (기존 기능 유지)
+    
+    // 임시 Mock 로직 (기존 기능 유지 - 나중에 fetchPresetsFromAI 연동 시 수정)
     setTimeout(() => {
       if (activeTags.length === 0 && inactiveTags.length === 0) {
         setActiveTags([
@@ -149,7 +147,6 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
     }
   };
 
-  // 1. 태그 크기 조절 (text-[20px], px-5 py-3으로 축소하여 한 화면에 더 잘 들어오게 조정)
   const renderTag = (tag: TagItem, currentZone: 'active' | 'inactive') => {
     const isOriginalSelected = tag.originalType === 'selected';
     const bgClass = isOriginalSelected ? 'bg-[#1E88E5] text-white' : 'bg-white text-[#1E88E5] border-2 border-[#1E88E5]';
@@ -177,7 +174,6 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       {/* ① 첫 화면 */}
       {step === 'start' && (
         <div className="flex-1 w-full px-6 flex flex-col pt-16 pb-12 animate-pop-in">
-          {/* 2. 문구 수정 반영 */}
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-8">
             오늘은 어떤 시원한 길을<br/>걸을까요?
           </h2>
@@ -204,7 +200,6 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       {/* ② 음성 입력 중 */}
       {step === 'voice_input' && (
         <div className="flex-1 w-full px-6 flex flex-col items-center pt-10 pb-8 animate-pop-in">
-          {/* 2. 문구 수정 반영 */}
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-10">
             오늘은 어떤 시원한 길을<br/>걸을까요?
           </h2>
@@ -228,7 +223,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
           <div className="bg-[#F0F7FF] p-8 rounded-[32px] text-center w-full mb-auto shadow-sm">
             <p className="text-gray-500 font-bold text-[16px] mb-3">듣고 있어요...</p>
-            <p className="text-[#1E40AF] font-bold text-[20px]">"도서관 근처 30분 코스 추천해줘"</p>
+            <p className="text-[#1E40AF] font-bold text-[20px]">5초 후 자동으로 처리됩니다</p>
           </div>
           
           <button onClick={handleStopVoice} className="w-full bg-[#FEE2E2] text-[#EF4444] py-6 rounded-2xl font-bold text-[22px] shadow-sm mt-4 active:scale-95 transition-transform">
@@ -240,7 +235,6 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       {/* ③ 입력 완료 */}
       {step === 'voice_confirm' && (
         <div className="flex-1 w-full px-6 flex flex-col items-center pt-16 pb-10 animate-pop-in">
-          {/* 2. 문구 수정 반영 */}
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-12">
             오늘은 어떤 시원한 길을<br/>걸을까요?
           </h2>
@@ -249,6 +243,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
           </div>
           
           <div className="bg-[#F0F7FF] p-8 rounded-[32px] w-full mb-8 shadow-sm flex items-center justify-center min-h-[140px]">
+             {/* 사용자가 직접 수정 가능한 영역 유지 */}
              <textarea
                 value={recognizedText}
                 onChange={(e) => setRecognizedText(e.target.value)}

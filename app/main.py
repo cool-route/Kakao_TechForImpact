@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from pathlib import Path 
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,10 +8,11 @@ from fastapi.staticfiles import StaticFiles
 from app.models.db import init_db
 from app.api.routes import router as route_router
 
-# 1. main.py 위치를 기준으로 frontend/dist의 절대 경로를 동적으로 계산합니다.
-# Path(__file__).resolve()는 main.py의 절대 경로
-# .parent는 app 폴더
-# .parent.parent는 최상위 Kakao_TechForImpact 폴더
+import os
+from fastapi import UploadFile, File
+import whisper
+import tempfile
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
 
@@ -31,7 +31,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,9 +41,27 @@ def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 app.include_router(route_router)
+model = whisper.load_model("base")
+@app.post("/speech")
+async def speech_to_text(audio: UploadFile = File(...)):
+    # 1. 임시 파일로 저장
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
+        temp_file_path = temp_audio.name
+        content = await audio.read()
+        temp_audio.write(content)
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+    try:
+        # 2. 로컬 Whisper 모델로 추론
+        result = model.transcribe(temp_file_path, language="ko")
+        return {"text": result["text"]}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        # 3. 임시 파일 삭제
+        os.remove(temp_file_path)
+
+# BASE_DIR = Path(__file__).resolve().parents[1]
+# FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
 # app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")
