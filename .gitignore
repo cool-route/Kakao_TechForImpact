@@ -10,3 +10,23 @@ node_modules/
 *.bak
 
 data/raw/
+# 디폴트 무시된 파일
+/shelf/
+/workspace.xml
+# 에디터 기반 HTTP 클라이언트 요청
+/httpRequests/
+
+
+# 데이터베이스 및 임시 파일
+*.db
+.idea/
+
+data/raw/
+data/ver1_data/
+data/ver1_routes/
+data/vulnerable_group_data/
+data_preprocessing/
+
+scripts/ver1_scripts/
+scripts/test_scripts/
+scripts/ver2_create_route
