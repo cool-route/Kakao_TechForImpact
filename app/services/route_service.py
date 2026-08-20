@@ -5,7 +5,7 @@ import re
 from copy import deepcopy
 from pathlib import Path
 
-from app.core.config import MODES, ROUTE_OUTPUTS_DIR, ROUTE_OUTPUTS_SHELTERS_DIR, SHELTERS_PATH
+from app.core.config import MODES, ROUTE_OUTPUTS_DIR, ROUTE_OUTPUTS_SHELTERS_DIR, SHELTERS_PATH, DATA_DIR
 from app.services.geo import Coordinate, haversine_m, point_to_segment_distance_m
 from app.services.geojson_loader import load_shelters
 from app.services.graph_loader import clear_graph_cache, load_route_graph
@@ -14,6 +14,7 @@ from app.services.route_geojson import to_feature_collection, unique_shelters
 
 
 _recommended_routes_cache: dict[str, list[dict]] = {}
+_route_tags_config: dict | None = None
 
 
 def _normalize_heat_score_avg(value: float) -> float:
@@ -49,11 +50,132 @@ def get_recommended_routes(mode: str | None = None) -> list[dict]:
         return deepcopy(_recommended_routes_cache[cache_key])
 
     routes = _load_precomputed_routes()
+    # fallback: synthesize routes if none found (useful for tests/dev)
+    if not routes:
+        routes = _synthesize_fallback_routes(count=14)
     if mode is not None:
         routes = [r for r in routes if r["mode"] == mode]
 
     _recommended_routes_cache[cache_key] = routes
     return deepcopy(routes)
+
+
+def _load_route_tags_config() -> dict:
+    global _route_tags_config
+    if _route_tags_config is not None:
+        return _route_tags_config
+    path = DATA_DIR / "route_tags.json"
+    if not path.exists():
+        _route_tags_config = {}
+        return _route_tags_config
+    with path.open(encoding="utf-8") as f:
+        _route_tags_config = json.load(f)
+    return _route_tags_config
+
+
+def _derive_tags_for_route(route: dict, tag_cfg: dict) -> list[str]:
+    tags = set()
+    # Basic heuristics based on route metrics
+    heat = float(route.get("heat_score_avg") or 0.0)
+    dist = float(route.get("distance_m") or 0.0)
+    shelters = route.get("shelters") or []
+    shelters_count = len(shelters)
+
+    # compute average shade_ratio and ground_temp from geojson features if available
+    features = route.get("geojson", {}).get("features", [])
+    shade_vals = []
+    ground_vals = []
+    for feat in features:
+        props = feat.get("properties", {})
+        if "shade_ratio" in props:
+            try:
+                shade_vals.append(float(props.get("shade_ratio") or 0.0))
+            except Exception:
+                pass
+        if "ground_temp" in props:
+            try:
+                ground_vals.append(float(props.get("ground_temp") or 0.0))
+            except Exception:
+                pass
+
+    avg_shade = sum(shade_vals) / len(shade_vals) if shade_vals else 0.0
+    avg_ground = sum(ground_vals) / len(ground_vals) if ground_vals else 0.0
+
+    # Heuristic tag assignments
+    if heat <= 22.0:
+        tags.add("시원한길")
+    if avg_shade >= 0.35:
+        tags.add("그늘많음")
+    if shelters_count >= 2:
+        tags.add("쉼터많음")
+    elif shelters_count == 1:
+        tags.add("쉼터있음")
+
+    # duration tags
+    if dist <= 900:
+        tags.add("15분")
+    elif dist <= 3000:
+        tags.add("30분")
+    elif dist <= 5000:
+        tags.add("45분")
+    else:
+        tags.add("60분")
+
+    # always include mode tag if present
+    mode = route.get("mode")
+    if mode:
+        tags.add(mode)
+
+    # only keep tags that appear in tag_weights if available
+    weights = (tag_cfg or {}).get("tag_weights") or {}
+    if weights:
+        filtered = [t for t in tags if t in weights]
+        return sorted(filtered)
+
+    return sorted(tags)
+
+
+def select_top_k_routes(preferred_tags: list[str] | None = None, k: int = 3, mode: str | None = None) -> list[dict]:
+    """Return top-k recommended routes ranked by matching score against preferred_tags.
+
+    Tie-breakers follow config: lower heat_score_avg, shorter distance_m, more shelters.
+    """
+    tag_cfg = _load_route_tags_config()
+    weights = tag_cfg.get("tag_weights", {}) if tag_cfg else {}
+    scoring_rules = tag_cfg.get("scoring_rules", {}) if tag_cfg else {}
+
+    routes = get_recommended_routes(mode=mode)
+    scored = []
+    for r in routes:
+        route = deepcopy(r)
+        route_tags = _derive_tags_for_route(route, tag_cfg)
+        route["tags"] = route_tags
+
+        # compute match score
+        match_score = 0.0
+        if preferred_tags:
+            for t in preferred_tags:
+                if t in route_tags:
+                    match_score += float(weights.get(t, 0.0))
+
+        # fallback: if no preferred tags provided, score by sum of all tag weights
+        if not preferred_tags:
+            match_score = sum(float(weights.get(t, 0.0)) for t in route_tags)
+
+        route["match_score"] = round(match_score, 3)
+        scored.append(route)
+
+    # sort by match_score desc, then tie-breakers
+    def sort_key(r: dict):
+        return (
+            -r.get("match_score", 0.0),
+            r.get("heat_score_avg", float("inf")),
+            r.get("distance_m", float("inf")),
+            -(len(r.get("shelters") or [])),
+        )
+
+    scored.sort(key=sort_key)
+    return [deepcopy(r) for r in scored[:k]]
 
 
 def _load_precomputed_routes() -> list[dict]:
@@ -73,6 +195,84 @@ def _load_precomputed_routes() -> list[dict]:
             route_id += 1
 
     return routes
+
+
+def _synthesize_fallback_routes(count: int = 14) -> list[dict]:
+    """Create deterministic fallback recommended routes when precomputed files are missing.
+
+    Uses `data/route_specs.json` and `data/sample` shelters to build simple GeoJSONs.
+    """
+    specs_path = DATA_DIR / "route_specs.json"
+    sample_shelters_path = DATA_DIR / "sample" / "shelters.json"
+    specs = []
+    if specs_path.exists():
+        with specs_path.open(encoding="utf-8") as f:
+            try:
+                specs = json.load(f)
+            except Exception:
+                specs = []
+
+    shelters_sample = []
+    if sample_shelters_path.exists():
+        with sample_shelters_path.open(encoding="utf-8") as f:
+            try:
+                shelters_sample = json.load(f)
+            except Exception:
+                shelters_sample = []
+
+    result = []
+    sid = 1
+    # if no specs, create simple placeholder routes
+    if not specs:
+        for i in range(count):
+            route = {
+                "id": sid,
+                "name": f"추천 경로 {sid}",
+                "mode": "노약자",
+                "heat_score_avg": 25.0 - (i % 5),
+                "distance_m": 1000.0 + i * 100.0,
+                "geojson": {"type": "FeatureCollection", "features": []},
+                "shelters": shelters_sample if i % 3 == 0 else [],
+                "is_dummy": True,
+            }
+            result.append(route)
+            sid += 1
+        return result
+
+    # create up to `count` routes by cycling specs
+    i = 0
+    while len(result) < count:
+        spec = specs[i % len(specs)]
+        name = spec.get("name") or f"route_{i}"
+        start = spec.get("start") or [37.3219, 127.0972]
+        end = spec.get("end") or [37.3247, 127.1245]
+        # simple LineString feature using start->end
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "LineString", "coordinates": [[start[1], start[0]], [end[1], end[0]]]},
+                    "properties": {"mode": spec.get("mode", "노약자"), "heat_score": 22.0 + (i % 5), "distance_m": 1000.0 + i * 100.0},
+                }
+            ],
+        }
+        shelters = shelters_sample if "쉼터" in name or (i % 4 == 0) else []
+        route = {
+            "id": sid,
+            "name": name,
+            "mode": spec.get("mode", "노약자"),
+            "heat_score_avg": round(22.0 + (i % 5), 3),
+            "distance_m": round(1000.0 + i * 100.0, 1),
+            "geojson": geojson,
+            "shelters": shelters,
+            "is_dummy": True,
+        }
+        result.append(route)
+        sid += 1
+        i += 1
+
+    return result
 
 
 def _build_route_from_files(
