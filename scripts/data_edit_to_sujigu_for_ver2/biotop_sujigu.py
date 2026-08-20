@@ -14,7 +14,7 @@ print("개수:", len(boundary))
 # 2. 비오톱 유형도
 # =========================
 biotop = gpd.read_file(
-    "data/raw/녹지 현황도_용인시_20251021/grbt_41460_20251021.shp"
+    "data/raw/비오톱 유형도 중분류_용인시_20251021/biotop_mclsf_41460_20251021.shp"
 )
 
 print()
@@ -52,7 +52,7 @@ print("수지구 비오톱 개수:", len(biotop_suji))
 # 5. 결과 저장
 # =========================
 biotop_suji.to_file(
-    "data/processed_data/비오톱 유형도_수지구/biotop_suji.shp",
+    "data/processed_data/비오톱_유형도_수지구/biotop_suji.shp",
     encoding="utf-8"
 )
 
