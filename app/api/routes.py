@@ -3,7 +3,13 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import MODES
 from app.schemas.routes import Mode, NearestRouteResponse, RecommendedRouteResponse, RouteRequest, RouteResponse, ShelterResponse
-from app.services.route_service import find_nearest_route, get_all_shelters, get_recommended_routes, shortest_cool_route
+from app.services.route_service import (
+    find_nearest_route,
+    get_all_shelters,
+    get_recommended_routes,
+    shortest_cool_route,
+    select_top_k_routes,
+)
 
 
 router = APIRouter(tags=["routes"])
@@ -66,3 +72,16 @@ def get_nearest_route(
         return find_nearest_route(lat=lat, lng=lng)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+
+@router.get(
+    "/routes/top",
+    summary="Top-k 추천 경로",
+    description="선호 태그(선택)를 기반으로 상위 k개의 추천 경로(기본 k=3)를 반환합니다.",
+    response_model=list[RecommendedRouteResponse],
+)
+def list_top_routes(tags: list[str] | None = Query(default=None, description="선호 태그 목록"), mode: Mode | None = Query(default=None, description="모드 필터 — 생략 시 전체 반환")) -> list[dict]:
+    if mode is not None and mode not in MODES:
+        return []
+    return select_top_k_routes(preferred_tags=tags, k=3, mode=mode)
