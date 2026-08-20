@@ -1,0 +1,45 @@
+{
+  "route_id": "057",
+  "location": [
+    "상현1동",
+    "상현2동",
+    "상현3동",
+    "성복동"
+  ],
+  "distance_m": 8761.6,
+  "duration": "2시간 이상",
+  "heat_score": {
+    "value": 58.6507,
+    "grade": "q3"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.5532,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.5532,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.5641,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.7002,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.3553,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0395,
+      "missing": false
+    },
+    "shelter": {
+      "count": 1
+    }
+  },
+  "tags": []
+}

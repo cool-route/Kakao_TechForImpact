@@ -1,0 +1,43 @@
+{
+  "route_id": "043",
+  "location": [
+    "동천동",
+    "죽전2동"
+  ],
+  "distance_m": 3132.5,
+  "duration": "1시간 안팎",
+  "heat_score": {
+    "value": 56.5648,
+    "grade": "q2"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.5128,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.5041,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.5066,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.7669,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.4,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0157,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,42 @@
+{
+  "route_id": "030",
+  "location": [
+    "신봉동"
+  ],
+  "distance_m": 1568.0,
+  "duration": "30분 안팎",
+  "heat_score": {
+    "value": 43.321,
+    "grade": "q1"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.2774,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.2774,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.3276,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.646,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.2,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0433,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}

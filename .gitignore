@@ -22,6 +22,5 @@ data/ver1_routes/
 data/vulnerable_group_data/
 data_preprocessing/
 
-scripts/ver1_scripts/
-scripts/test_scripts/
-scripts/ver2_create_route
+scripts/
+visualize_map/

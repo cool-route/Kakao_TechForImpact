@@ -1,0 +1,43 @@
+{
+  "route_id": "052",
+  "location": [
+    "죽전3동",
+    "죽전1동"
+  ],
+  "distance_m": 8351.1,
+  "duration": "2시간 이상",
+  "heat_score": {
+    "value": 51.8598,
+    "grade": "q2"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.4963,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.4889,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.4509,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.5738,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.2589,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0763,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}
