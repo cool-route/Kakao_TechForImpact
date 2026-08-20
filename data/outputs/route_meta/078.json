@@ -1,0 +1,42 @@
+{
+  "route_id": "078",
+  "location": [
+    "동천동"
+  ],
+  "distance_m": 1628.0,
+  "duration": "30분 안팎",
+  "heat_score": {
+    "value": 53.4637,
+    "grade": "q2"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.4733,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.4828,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.4007,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.763,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.3228,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}

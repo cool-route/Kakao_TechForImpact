@@ -1,0 +1,42 @@
+{
+  "route_id": "037",
+  "location": [
+    "풍덕천1동"
+  ],
+  "distance_m": 3122.0,
+  "duration": "1시간 안팎",
+  "heat_score": {
+    "value": 65.6115,
+    "grade": "q4"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.71,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.71,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.6068,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.7472,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.4,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0395,
+      "missing": false
+    },
+    "shelter": {
+      "count": 1
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "014_edges",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5186" } },
+"features": [
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 54.04, "heat_grade": "q2", "length": 31.033082014292905 }, "geometry": { "type": "LineString", "coordinates": [ [ 208264.871410125459079, 526287.171106090419926 ], [ 208295.976819411473116, 526286.95770640228875 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 75.01, "heat_grade": "q5", "length": 43.276155413049281 }, "geometry": { "type": "LineString", "coordinates": [ [ 208264.871410125459079, 526287.171106090419926 ], [ 208263.974678261089139, 526243.986311202868819 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 78.12, "heat_grade": "q5", "length": 73.974045578235817 }, "geometry": { "type": "LineString", "coordinates": [ [ 208263.974678261089139, 526243.986311202868819 ], [ 208189.82674975466216, 526244.190909238299355 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 72.1, "heat_grade": "q5", "length": 44.272036807680628 }, "geometry": { "type": "LineString", "coordinates": [ [ 208189.82674975466216, 526244.190909238299355 ], [ 208182.402187832747586, 526287.756002475041896 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 53.75, "heat_grade": "q2", "length": 34.21490316371419 }, "geometry": { "type": "LineString", "coordinates": [ [ 208182.402187832747586, 526287.756002475041896 ], [ 208190.956992540624924, 526320.826529747573659 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 44.9, "heat_grade": "q1", "length": 105.25605368968421 }, "geometry": { "type": "LineString", "coordinates": [ [ 208190.956992540624924, 526320.826529747573659 ], [ 208296.458010743022896, 526320.053641335340217 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "014", "heat_score": 34.11, "heat_grade": "q1", "length": 33.162338697610963 }, "geometry": { "type": "LineString", "coordinates": [ [ 208295.976819411473116, 526286.95770640228875 ], [ 208296.458010743022896, 526320.053641335340217 ] ] } }
+]
+}

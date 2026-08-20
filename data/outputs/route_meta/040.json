@@ -1,0 +1,44 @@
+{
+  "route_id": "040",
+  "location": [
+    "성복동",
+    "풍덕천2동",
+    "신봉동"
+  ],
+  "distance_m": 3387.1,
+  "duration": "1시간 안팎",
+  "heat_score": {
+    "value": 52.193,
+    "grade": "q2"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.4344,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.4344,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.4093,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.7303,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.4,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0434,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}

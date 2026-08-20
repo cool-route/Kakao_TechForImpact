@@ -1,0 +1,42 @@
+{
+  "route_id": "080",
+  "location": [
+    "풍덕천2동"
+  ],
+  "distance_m": 1647.1,
+  "duration": "30분 안팎",
+  "heat_score": {
+    "value": 48.0931,
+    "grade": "q1"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.3554,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.3554,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.4014,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.6762,
+      "missing": false
+    },
+    "green": {
+      "normalized": null,
+      "missing": true
+    },
+    "slope_over_15deg": {
+      "normalized": 0.006,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}
