@@ -2,52 +2,93 @@
   "schema_version": "1.0.0",
   "description": "STT 및 프리셋 편집 UI에서 사용되는 허용 프리셋 마스터 목록",
   "categories": {
+    "experience": [
+      {
+        "id": "cool_path",
+        "label": "시원한길",
+        "type": "base",
+        "enabled": true
+      },
+      {
+        "id": "shelter_rich",
+        "label": "쉼터많음",
+        "type": "sub",
+        "enabled": true
+      },
+      {
+        "id": "low_surface_temp",
+        "label": "표면온도낮음",
+        "type": "sub",
+        "enabled": true
+      },
+      {
+        "id": "flat_path",
+        "label": "평지",
+        "type": "sub",
+        "enabled": true
+      },
+      {
+        "id": "quiet_path",
+        "label": "조용한길",
+        "type": "sub",
+        "enabled": true
+      }
+    ],
     "condition": [
       {
         "id": "with_elder",
         "label": "어르신과",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "with_pet",
         "label": "반려동물과",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "with_stroller",
         "label": "유아·유모차",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "mobility_support",
         "label": "휠체어·보행 보조",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "alone",
         "label": "혼자",
+        "type": "base",
         "enabled": true
       }
     ],
     "environment": [
       {
         "id": "flat_path",
-        "label": "평지 위주",
+        "label": "평지",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "park_route",
         "label": "공원 경유",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "water_route",
         "label": "물길 따라 (하천·호수변)",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "green_path",
         "label": "녹지 많은 길",
+        "type": "sub",
         "enabled": true
       }
     ],
@@ -55,48 +96,63 @@
       {
         "id": "shady_path",
         "label": "그늘 많은 길",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "indoor_path",
         "label": "실내·지하 구간 활용",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "shelter_route",
         "label": "무더위쉼터 경유",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "low_tmrt",
         "label": "복사열 낮은 노면",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "low_heat_island",
         "label": "열섬 영향 적은 길",
+        "type": "sub",
         "enabled": true
       }
     ],
     "duration": [
       {
         "id": "walk_10m",
-        "label": "10분 이내",
+        "label": "10분",
+        "type": "base",
+        "enabled": true
+      },
+      {
+        "id": "walk_15m",
+        "label": "15분",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "walk_30m",
-        "label": "30분 안팎",
+        "label": "30분",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "walk_60m",
-        "label": "1시간 안팎",
+        "label": "1시간",
+        "type": "base",
         "enabled": true
       },
       {
         "id": "walk_120m_plus",
         "label": "2시간 이상",
+        "type": "base",
         "enabled": true
       }
     ],
@@ -104,56 +160,67 @@
       {
         "id": "pungdeokcheon_1",
         "label": "풍덕천1동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "pungdeokcheon_2",
         "label": "풍덕천2동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "sinbong",
         "label": "신봉동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "seongbok",
         "label": "성복동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "dongcheon",
         "label": "동천동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "sanghyeon_1",
         "label": "상현1동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "sanghyeon_2",
         "label": "상현2동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "sanghyeon_3",
         "label": "상현3동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "jukjeon_1",
         "label": "죽전1동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "jukjeon_2",
         "label": "죽전2동",
+        "type": "sub",
         "enabled": true
       },
       {
         "id": "jukjeon_3",
         "label": "죽전3동",
+        "type": "sub",
         "enabled": true
       }
     ]
