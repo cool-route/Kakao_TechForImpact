@@ -45,7 +45,12 @@ def init_db() -> None:
                 heat_score_avg REAL NOT NULL,
                 distance_m REAL NOT NULL,
                 geojson TEXT NOT NULL,
+                tags TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
             """
         )
+
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(routes)")}
+        if "tags" not in columns:
+            conn.execute("ALTER TABLE routes ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'")

@@ -5,7 +5,15 @@ import re
 from copy import deepcopy
 from pathlib import Path
 
-from app.core.config import MODES, ROUTE_OUTPUTS_DIR, ROUTE_OUTPUTS_SHELTERS_DIR, SHELTERS_PATH, DATA_DIR
+from app.core.config import (
+    DATA_DIR,
+    MODES,
+    ROUTE_GEOM_DIR,
+    ROUTE_META_DIR,
+    ROUTE_OUTPUTS_DIR,
+    ROUTE_OUTPUTS_SHELTERS_DIR,
+    SHELTERS_PATH,
+)
 from app.services.geo import Coordinate, haversine_m, point_to_segment_distance_m
 from app.services.geojson_loader import load_shelters
 from app.services.graph_loader import clear_graph_cache, load_route_graph
@@ -15,6 +23,7 @@ from app.services.route_geojson import to_feature_collection, unique_shelters
 
 _recommended_routes_cache: dict[str, list[dict]] = {}
 _route_tags_config: dict | None = None
+_preset_catalog_maps: dict | None = None
 
 
 def _normalize_heat_score_avg(value: float) -> float:
@@ -70,7 +79,182 @@ def _load_route_tags_config() -> dict:
         return _route_tags_config
     with path.open(encoding="utf-8") as f:
         _route_tags_config = json.load(f)
+
+    tag_weights = _route_tags_config.get("tag_weights", {})
+    normalized_weights: dict[str, float] = {}
+    for raw_tag, weight in tag_weights.items():
+        normalized_weights[_normalize_tag_id(raw_tag)] = float(weight)
+    _route_tags_config["tag_weights"] = normalized_weights
     return _route_tags_config
+
+
+def _load_preset_catalog_maps() -> dict:
+    global _preset_catalog_maps
+    if _preset_catalog_maps is not None:
+        return _preset_catalog_maps
+
+    path = DATA_DIR / "preset_catalog.json"
+    with path.open(encoding="utf-8") as f:
+        catalog = json.load(f)
+
+    id_index: dict[str, dict] = {}
+    label_to_id: dict[str, str] = {}
+    alias_to_id: dict[str, str] = {}
+    category_to_ids: dict[str, list[str]] = {}
+
+    for category_name, items in catalog.get("categories", {}).items():
+        category_to_ids.setdefault(category_name, [])
+        for item in items:
+            preset_id = item["id"]
+            id_index[preset_id] = {
+                "label": item["label"],
+                "category": category_name,
+                "type": item.get("type", "sub"),
+                "enabled": bool(item.get("enabled", False)),
+                "aliases": list(item.get("aliases", [])),
+            }
+            label_to_id[item["label"]] = preset_id
+            for alias in item.get("aliases", []):
+                alias_to_id[alias] = preset_id
+            category_to_ids[category_name].append(preset_id)
+
+    _preset_catalog_maps = {
+        "catalog": catalog,
+        "id_index": id_index,
+        "label_to_id": label_to_id,
+        "alias_to_id": alias_to_id,
+        "category_to_ids": category_to_ids,
+    }
+    return _preset_catalog_maps
+
+
+def _normalize_tag_id(tag: str) -> str:
+    maps = _load_preset_catalog_maps()
+    if tag in maps["id_index"]:
+        return tag
+    if tag in maps["label_to_id"]:
+        return maps["label_to_id"][tag]
+    if tag in maps["alias_to_id"]:
+        return maps["alias_to_id"][tag]
+    return tag
+
+
+def _place_tag_id(location_label: str | None, route_id: int | None = None) -> str | None:
+    if not location_label:
+        return None
+    maps = _load_preset_catalog_maps()
+    tag_id = maps["label_to_id"].get(location_label) or maps["alias_to_id"].get(location_label)
+    if tag_id:
+        return tag_id
+
+    place_ids = maps["category_to_ids"].get("place", [])
+    if not place_ids:
+        return None
+
+    # Fallback: stable assignment by route_id to guarantee one place tag.
+    index = (route_id - 1) % len(place_ids) if route_id else 0
+    return place_ids[index]
+
+
+def _duration_tag_id(duration_label: str | None, distance_m: float) -> str:
+    maps = _load_preset_catalog_maps()
+    label_map = maps["label_to_id"]
+
+    if duration_label:
+        tag_id = label_map.get(duration_label)
+        if tag_id:
+            return tag_id
+
+    if distance_m <= 700:
+        return label_map.get("10분") or "walk_10m"
+    if distance_m <= 1400:
+        return label_map.get("15분") or "walk_15m"
+    if distance_m <= 3200:
+        return label_map.get("30분") or "walk_30m"
+    if distance_m <= 6500:
+        return label_map.get("1시간") or "walk_60m"
+    return label_map.get("2시간 이상") or "walk_120m_plus"
+
+
+def _build_route_tags_from_meta(meta: dict, route_id: int | None = None) -> list[str]:
+    maps = _load_preset_catalog_maps()
+    tags: list[str] = []
+
+    # All current outputs represent the elder/walking support route set.
+    condition_tag = _normalize_tag_id("어르신과")
+    if condition_tag in maps["id_index"]:
+        tags.append(condition_tag)
+
+    duration_tag = _duration_tag_id(meta.get("duration"), float(meta.get("distance_m") or 0.0))
+    if duration_tag not in tags:
+        tags.append(duration_tag)
+
+    location = meta.get("location") or []
+    place_tag = _place_tag_id(location[0] if location else None, route_id=route_id)
+    if place_tag and place_tag not in tags:
+        tags.append(place_tag)
+
+    heat = meta.get("heat_score") or {}
+    heat_value = float(heat.get("value") or 0.0)
+    heat_grade = str(heat.get("grade") or "")
+    data = meta.get("data") or {}
+    slope = float((data.get("slope_over_15deg") or {}).get("normalized") or 0.0)
+    tmrt = float((data.get("tmrt") or {}).get("normalized") or 0.0)
+    svf = float((data.get("sky_view_factor") or {}).get("normalized") or 0.0)
+    green = (data.get("green") or {}).get("normalized")
+    shelter_count = int((data.get("shelter") or {}).get("count") or 0)
+
+    # Heat / comfort tags
+    if heat_grade == "q1" or heat_value <= 35:
+        tags.append(_normalize_tag_id("시원한길"))
+    if tmrt <= 0.25 or heat_value <= 40:
+        tags.append(_normalize_tag_id("복사열 낮은 노면"))
+    if svf <= 0.22:
+        tags.append(_normalize_tag_id("그늘 많은 길"))
+    if green is not None and float(green) >= 0.2:
+        tags.append(_normalize_tag_id("녹지 많은 길"))
+    if slope <= 0.03:
+        tags.append(_normalize_tag_id("평지"))
+    if shelter_count >= 1:
+        tags.append(_normalize_tag_id("무더위쉼터 경유"))
+        tags.append(_normalize_tag_id("쉼터많음"))
+
+    # Mobility-support style rule based on the data we actually have.
+    if slope <= 0.01 and svf <= 0.15:
+        tags.append(_normalize_tag_id("휠체어·보행 보조"))
+
+    feature_candidates = {
+        _normalize_tag_id("시원한길"),
+        _normalize_tag_id("복사열 낮은 노면"),
+        _normalize_tag_id("그늘 많은 길"),
+        _normalize_tag_id("녹지 많은 길"),
+        _normalize_tag_id("평지"),
+        _normalize_tag_id("무더위쉼터 경유"),
+        _normalize_tag_id("쉼터많음"),
+        _normalize_tag_id("휠체어·보행 보조"),
+    }
+
+    # Deduplicate while preserving order.
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for tag in tags:
+        normalized = _normalize_tag_id(tag)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(normalized)
+
+    # Ensure mandatory categories are represented even if heuristic tags are sparse.
+    if duration_tag not in seen:
+        deduped.insert(1 if deduped else 0, duration_tag)
+    if place_tag and place_tag not in seen:
+        insert_at = 2 if len(deduped) >= 2 else len(deduped)
+        deduped.insert(insert_at, place_tag)
+
+    if not any(tag in feature_candidates for tag in deduped):
+        deduped.append(_normalize_tag_id("시원한길") if heat_value <= 60 else _normalize_tag_id("평지"))
+
+    return deduped
 
 
 def _derive_tags_for_route(route: dict, tag_cfg: dict) -> list[str]:
@@ -103,34 +287,30 @@ def _derive_tags_for_route(route: dict, tag_cfg: dict) -> list[str]:
 
     # Heuristic tag assignments
     if heat <= 22.0:
-        tags.add("시원한길")
+        tags.add(_normalize_tag_id("시원한길"))
     if avg_shade >= 0.35:
-        tags.add("그늘많음")
-    if shelters_count >= 2:
-        tags.add("쉼터많음")
-    elif shelters_count == 1:
-        tags.add("쉼터있음")
+        tags.add(_normalize_tag_id("그늘 많은 길"))
+    if shelters_count >= 1:
+        tags.add(_normalize_tag_id("무더위쉼터 경유"))
+        tags.add(_normalize_tag_id("쉼터많음"))
 
     # duration tags
     if dist <= 900:
-        tags.add("15분")
+        tags.add(_duration_tag_id(None, 800))
     elif dist <= 3000:
-        tags.add("30분")
+        tags.add(_duration_tag_id(None, 2000))
     elif dist <= 5000:
-        tags.add("45분")
+        tags.add(_duration_tag_id(None, 4000))
     else:
-        tags.add("60분")
+        tags.add(_duration_tag_id(None, 7000))
 
     # always include mode tag if present
     mode = route.get("mode")
     if mode:
-        tags.add(mode)
-
-    # only keep tags that appear in tag_weights if available
-    weights = (tag_cfg or {}).get("tag_weights") or {}
-    if weights:
-        filtered = [t for t in tags if t in weights]
-        return sorted(filtered)
+        if mode == "노약자":
+            tags.add(_normalize_tag_id("어르신과"))
+        else:
+            tags.add(_normalize_tag_id(mode))
 
     return sorted(tags)
 
@@ -142,24 +322,26 @@ def select_top_k_routes(preferred_tags: list[str] | None = None, k: int = 3, mod
     """
     tag_cfg = _load_route_tags_config()
     weights = tag_cfg.get("tag_weights", {}) if tag_cfg else {}
-    scoring_rules = tag_cfg.get("scoring_rules", {}) if tag_cfg else {}
 
     routes = get_recommended_routes(mode=mode)
     scored = []
+    preferred_tag_ids = [_normalize_tag_id(tag) for tag in (preferred_tags or [])]
     for r in routes:
         route = deepcopy(r)
-        route_tags = _derive_tags_for_route(route, tag_cfg)
+        route_tags = [_normalize_tag_id(tag) for tag in route.get("tags", [])]
+        if not route_tags:
+            route_tags = _derive_tags_for_route(route, tag_cfg)
         route["tags"] = route_tags
 
         # compute match score
         match_score = 0.0
-        if preferred_tags:
-            for t in preferred_tags:
+        if preferred_tag_ids:
+            for t in preferred_tag_ids:
                 if t in route_tags:
                     match_score += float(weights.get(t, 0.0))
 
         # fallback: if no preferred tags provided, score by sum of all tag weights
-        if not preferred_tags:
+        if not preferred_tag_ids:
             match_score = sum(float(weights.get(t, 0.0)) for t in route_tags)
 
         route["match_score"] = round(match_score, 3)
@@ -179,9 +361,14 @@ def select_top_k_routes(preferred_tags: list[str] | None = None, k: int = 3, mod
 
 
 def _load_precomputed_routes() -> list[dict]:
+    routes = _load_real_route_outputs()
+    if routes:
+        return routes
+
     routes = []
     route_id = 1
 
+    # Legacy support for older route output directories.
     for directory, has_shelters in [
         (ROUTE_OUTPUTS_DIR, False),
         (ROUTE_OUTPUTS_SHELTERS_DIR, True),
@@ -193,6 +380,43 @@ def _load_precomputed_routes() -> list[dict]:
             route = _build_route_from_files(route_id, edges_path, nodes_path, has_shelters)
             routes.append(route)
             route_id += 1
+
+    return routes
+
+
+def _load_real_route_outputs() -> list[dict]:
+    routes = []
+    if not ROUTE_META_DIR.exists() or not ROUTE_GEOM_DIR.exists():
+        return routes
+
+    for meta_path in sorted(ROUTE_META_DIR.glob("*.json")):
+        route_id = int(meta_path.stem)
+        geom_path = ROUTE_GEOM_DIR / f"{meta_path.stem}_edges.geojson"
+        if not geom_path.exists():
+            continue
+
+        with meta_path.open(encoding="utf-8") as f:
+            meta = json.load(f)
+        with geom_path.open(encoding="utf-8") as f:
+            geojson = json.load(f)
+
+        route_tags = meta.get("tags") or _build_route_tags_from_meta(meta, route_id=route_id)
+        route_name = _make_route_name_from_meta(meta)
+        heat_score = float((meta.get("heat_score") or {}).get("value") or 0.0)
+
+        routes.append(
+            {
+                "id": route_id,
+                "name": route_name,
+                "mode": "노약자",
+                "heat_score_avg": round(heat_score, 3),
+                "distance_m": round(float(meta.get("distance_m") or 0.0), 1),
+                "geojson": geojson,
+                "shelters": [],
+                "is_dummy": False,
+                "tags": route_tags,
+            }
+        )
 
     return routes
 
@@ -225,6 +449,8 @@ def _synthesize_fallback_routes(count: int = 14) -> list[dict]:
     # if no specs, create simple placeholder routes
     if not specs:
         for i in range(count):
+            location_label = _load_preset_catalog_maps()["category_to_ids"].get("place", [])[i % max(1, len(_load_preset_catalog_maps()["category_to_ids"].get("place", [])))] if _load_preset_catalog_maps()["category_to_ids"].get("place") else None
+            duration_tag = _duration_tag_id(None, 1000.0 + i * 100.0)
             route = {
                 "id": sid,
                 "name": f"추천 경로 {sid}",
@@ -234,6 +460,7 @@ def _synthesize_fallback_routes(count: int = 14) -> list[dict]:
                 "geojson": {"type": "FeatureCollection", "features": []},
                 "shelters": shelters_sample if i % 3 == 0 else [],
                 "is_dummy": True,
+                "tags": [t for t in ["with_elder", location_label, duration_tag] if t],
             }
             result.append(route)
             sid += 1
@@ -267,6 +494,16 @@ def _synthesize_fallback_routes(count: int = 14) -> list[dict]:
             "geojson": geojson,
             "shelters": shelters,
             "is_dummy": True,
+            "tags": _build_route_tags_from_meta(
+                {
+                    "location": [spec.get("name", "")],
+                    "distance_m": 1000.0 + i * 100.0,
+                    "duration": None,
+                    "heat_score": {"value": 22.0 + (i % 5), "grade": "q1"},
+                    "data": {"slope_over_15deg": {"normalized": 0.0}, "tmrt": {"normalized": 0.2}, "sky_view_factor": {"normalized": 0.1}, "shelter": {"count": len(shelters)}},
+                },
+                route_id=sid,
+            ),
         }
         result.append(route)
         sid += 1
@@ -346,6 +583,16 @@ def _build_route_from_files(
         "shelters": shelters,
         "is_dummy": False,
     }
+
+
+def _make_route_name_from_meta(meta: dict) -> str:
+    locations = meta.get("location") or []
+    duration = meta.get("duration") or ""
+    if locations:
+        return f"{locations[0]} {duration}".strip()
+    if duration:
+        return str(duration)
+    return f"추천 경로 {meta.get('route_id', '')}".strip()
 
 
 def _make_route_name(stem: str) -> str:

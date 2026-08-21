@@ -10,14 +10,117 @@ from app.api.routes import router as route_router
 
 import os
 import json
-import whisper
 import tempfile
-import httpx
 from pydantic import BaseModel, Field
 from typing import List
 
+try:
+    import whisper
+except ImportError:  # pragma: no cover - optional dependency for speech-to-text only
+    whisper = None
+
+try:
+    import httpx
+except ImportError:  # pragma: no cover - optional dependency for local preset proxy only
+    httpx = None
+
+try:
+    import multipart  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency for speech upload only
+    multipart = None
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+PRESET_CATALOG_PATH = BASE_DIR / "data" / "preset_catalog.json"
+
+_preset_catalog_cache: dict | None = None
+
+
+def _load_preset_catalog() -> dict:
+    global _preset_catalog_cache
+    if _preset_catalog_cache is not None:
+        return _preset_catalog_cache
+
+    with PRESET_CATALOG_PATH.open(encoding="utf-8") as f:
+        _preset_catalog_cache = json.load(f)
+    return _preset_catalog_cache
+
+
+def _build_local_preset_response(text: str) -> dict:
+    catalog = _load_preset_catalog()
+    label_to_id: dict[str, str] = {}
+    alias_to_id: dict[str, str] = {}
+    category_to_ids: dict[str, list[str]] = {}
+
+    for category_name, items in catalog.get("categories", {}).items():
+        category_to_ids.setdefault(category_name, [])
+        for item in items:
+            preset_id = item["id"]
+            label_to_id[item["label"]] = preset_id
+            for alias in item.get("aliases", []):
+                alias_to_id[alias] = preset_id
+            category_to_ids[category_name].append(preset_id)
+
+    lowered = text.replace(" ", "")
+    base_presets: list[str] = []
+    sub_presets: list[str] = []
+
+    def add_base(*preset_ids: str) -> None:
+        for preset_id in preset_ids:
+            if preset_id and preset_id not in base_presets:
+                base_presets.append(preset_id)
+
+    def add_sub(*preset_ids: str) -> None:
+        for preset_id in preset_ids:
+            if preset_id and preset_id not in sub_presets:
+                sub_presets.append(preset_id)
+
+    keyword_rules = [
+        ("어르신", lambda: add_base("with_elder")),
+        ("노약자", lambda: add_base("with_elder")),
+        ("강아지", lambda: add_base("with_pet")),
+        ("반려동물", lambda: add_base("with_pet")),
+        ("유모차", lambda: add_base("with_stroller")),
+        ("휠체어", lambda: add_base("mobility_support")),
+        ("혼자", lambda: add_base("alone")),
+        ("시원", lambda: add_sub("cool_path", "low_tmrt")),
+        ("그늘", lambda: add_sub("shady_path")),
+        ("쉼터", lambda: add_sub("shelter_route", "shelter_rich")),
+        ("평지", lambda: add_sub("flat_path")),
+        ("조용", lambda: add_sub("quiet_path")),
+        ("녹지", lambda: add_sub("green_path")),
+        ("공원", lambda: add_sub("park_route")),
+    ]
+
+    for keyword, handler in keyword_rules:
+        if keyword in lowered:
+            handler()
+
+    duration_rules = [
+        ("10분", "walk_10m"),
+        ("15분", "walk_15m"),
+        ("30분", "walk_30m"),
+        ("1시간", "walk_60m"),
+        ("2시간", "walk_120m_plus"),
+    ]
+    for keyword, preset_id in duration_rules:
+        if keyword in lowered:
+            add_base(preset_id)
+            break
+    else:
+        add_base("walk_30m")
+
+    # Guarantee one place tag even in the local mock.
+    place_candidates = category_to_ids.get("place", [])
+    if place_candidates:
+        chosen_place = place_candidates[sum(ord(ch) for ch in lowered) % len(place_candidates)]
+        add_sub(chosen_place)
+
+    # Keep results within the catalog limits.
+    return {
+        "base_presets": base_presets[:3],
+        "sub_presets": sub_presets[:2],
+    }
 
 class ConfirmedTextRequest(BaseModel):
     text: str
@@ -51,32 +154,42 @@ def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 app.include_router(route_router)
-model = whisper.load_model("base")
-@app.post("/speech")
-async def speech_to_text(audio: UploadFile = File(...)):
-    # 1. 임시 파일로 저장
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
-        temp_file_path = temp_audio.name
-        content = await audio.read()
-        temp_audio.write(content)
+model = whisper.load_model("base") if whisper is not None else None
 
-    try:
-        # 2. 로컬 Whisper 모델로 추론
-        result = model.transcribe(temp_file_path, language="ko")
-        return {"text": result["text"]}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        # 3. 임시 파일 삭제
-        os.remove(temp_file_path)
+if multipart is not None:
+
+    @app.post("/speech")
+    async def speech_to_text(audio: UploadFile = File(...)):
+        if model is None:
+            raise HTTPException(status_code=503, detail="Whisper 모델이 설치되어 있지 않습니다.")
+
+        # 1. 임시 파일로 저장
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
+            temp_file_path = temp_audio.name
+            content = await audio.read()
+            temp_audio.write(content)
+
+        try:
+            # 2. 로컬 Whisper 모델로 추론
+            result = model.transcribe(temp_file_path, language="ko")
+            return {"text": result["text"]}
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            # 3. 임시 파일 삭제
+            os.remove(temp_file_path)
 
 # 로컬 임시 서버
 @app.post("/localServer")
 async def local_server(request: dict):
-    return {
-        "base_presets": ["base1", "base2", "base3"],
-        "sub_presets": ["sub1", "sub2", "sub3"]
-    }
+    text = str(request.get("text") or "")
+    if not text:
+        return {
+            "base_presets": ["with_elder", "walk_30m"],
+            "sub_presets": ["shelter_route", "flat_path"],
+        }
+
+    return _build_local_preset_response(text)
 
 # 해당 함수는 실제 백서버 주소를 기입한 후에 /api/routes.py에 옮길 예정
 @app.post("/preset", response_model=PresetResponse)
@@ -85,6 +198,9 @@ async def extract_presets(request: ConfirmedTextRequest):
 
     if not user_text:
         raise HTTPException(status_code=400, detail="텍스트가 전달되지 않았습니다.")
+
+    if httpx is None:
+        raise HTTPException(status_code=503, detail="httpx가 설치되어 있지 않습니다.")
 
     # PRESET_BACKEND_URL = "실제 백서버 주소"
     PRESET_BACKEND_URL = "http://127.0.0.1:8000/localServer"

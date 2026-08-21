@@ -38,24 +38,28 @@
       {
         "id": "with_elder",
         "label": "어르신과",
+        "aliases": ["노약자"],
         "type": "base",
         "enabled": true
       },
       {
         "id": "with_pet",
         "label": "반려동물과",
+        "aliases": ["반려동물"],
         "type": "base",
         "enabled": true
       },
       {
         "id": "with_stroller",
         "label": "유아·유모차",
+        "aliases": ["유아유모차"],
         "type": "base",
         "enabled": true
       },
       {
         "id": "mobility_support",
         "label": "휠체어·보행 보조",
+        "aliases": ["휠체어보행보조"],
         "type": "base",
         "enabled": true
       },
@@ -96,6 +100,7 @@
       {
         "id": "shady_path",
         "label": "그늘 많은 길",
+        "aliases": ["그늘많음"],
         "type": "sub",
         "enabled": true
       },
