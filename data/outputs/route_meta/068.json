@@ -1,0 +1,44 @@
+{
+  "route_id": "068",
+  "location": [
+    "상현2동",
+    "상현3동",
+    "상현1동"
+  ],
+  "distance_m": 3386.8,
+  "duration": "1시간 안팎",
+  "heat_score": {
+    "value": 52.5255,
+    "grade": "q2"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.4525,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.4525,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.48,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.6198,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.3116,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0468,
+      "missing": false
+    },
+    "shelter": {
+      "count": 1
+    }
+  },
+  "tags": []
+}

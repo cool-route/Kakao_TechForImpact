@@ -1,0 +1,45 @@
+{
+  "route_id": "042",
+  "location": [
+    "풍덕천2동",
+    "성복동",
+    "상현2동",
+    "상현1동"
+  ],
+  "distance_m": 2662.7,
+  "duration": "1시간 안팎",
+  "heat_score": {
+    "value": 61.5104,
+    "grade": "q3"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.6248,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.6248,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.523,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.7272,
+      "missing": false
+    },
+    "green": {
+      "normalized": 0.4,
+      "missing": false
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0389,
+      "missing": false
+    },
+    "shelter": {
+      "count": 0
+    }
+  },
+  "tags": []
+}

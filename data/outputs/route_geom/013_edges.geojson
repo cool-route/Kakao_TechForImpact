@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "013_edges",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5186" } },
+"features": [
+{ "type": "Feature", "properties": { "route_id": "013", "heat_score": 39.5, "heat_grade": "q1", "length": 44.568718165029125 }, "geometry": { "type": "LineString", "coordinates": [ [ 206550.561687267501839, 528050.036485995049588 ], [ 206508.337332780240104, 528035.508981203543954 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "013", "heat_score": 51.32, "heat_grade": "q2", "length": 138.816729486226 }, "geometry": { "type": "LineString", "coordinates": [ [ 206550.561687267501839, 528050.036485995049588 ], [ 206544.03129048741539, 528062.095373650081456 ], [ 206475.923117980681127, 528166.922590852365829 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "013", "heat_score": 46.84, "heat_grade": "q1", "length": 62.89734296997954 }, "geometry": { "type": "LineString", "coordinates": [ [ 206447.854028087342158, 528110.709535708185285 ], [ 206475.923117980681127, 528166.922590852365829 ] ] } },
+{ "type": "Feature", "properties": { "route_id": "013", "heat_score": 25.58, "heat_grade": "q1", "length": 114.8107356059655 }, "geometry": { "type": "LineString", "coordinates": [ [ 206508.337332780240104, 528035.508981203543954 ], [ 206470.901697966532083, 528072.515419265255332 ], [ 206448.627328442613361, 528072.997651993413456 ], [ 206441.78293054192909, 528090.339232202270068 ], [ 206447.854028087342158, 528110.709535708185285 ] ] } }
+]
+}

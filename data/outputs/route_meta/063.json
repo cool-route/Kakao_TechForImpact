@@ -1,0 +1,42 @@
+{
+  "route_id": "063",
+  "location": [
+    "죽전2동"
+  ],
+  "distance_m": 1577.4,
+  "duration": "30분 안팎",
+  "heat_score": {
+    "value": 60.7722,
+    "grade": "q3"
+  },
+  "data": {
+    "tmrt": {
+      "normalized": 0.6001,
+      "missing": false
+    },
+    "ctyart_heatwave": {
+      "normalized": 0.6001,
+      "missing": false
+    },
+    "sky_view_factor": {
+      "normalized": 0.5389,
+      "missing": false
+    },
+    "urban_heat_mitigation": {
+      "normalized": 0.7545,
+      "missing": false
+    },
+    "green": {
+      "normalized": null,
+      "missing": true
+    },
+    "slope_over_15deg": {
+      "normalized": 0.0062,
+      "missing": false
+    },
+    "shelter": {
+      "count": 1
+    }
+  },
+  "tags": []
+}
