@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Mic, Check, X, Plus, ArrowLeft, Search } from 'lucide-react';
+import { Mic, Check, X, Plus, ArrowLeft, Search, Loader2, AlertTriangle } from 'lucide-react';
 import type { Step, TagItem } from '../App';
 
 interface SearchFlowProps {
@@ -18,15 +18,20 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   const [tagError, setTagError] = useState(false);
   const voiceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tagErrorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const [sttStatus, setSttStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [analyzeError, setAnalyzeError] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const startRealSTT = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       audioChunks.current = [];
+      setSttStatus('idle');
+      setIsEditing(false);
 
       mediaRecorder.current.ondataavailable = (e) => { 
         if (e.data.size > 0) audioChunks.current.push(e.data); 
@@ -37,12 +42,12 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
         const formData = new FormData();
         formData.append("audio", audioBlob, "audio.webm");
 
-        // 5초가 지나 녹음이 끝나면 바로 확인 화면으로 이동하여 로딩 메시지 표시
+        // 5초가 지나 녹음이 끝나면 확인 화면으로 이동하여 '처리 중' 상태 설정
         setStep('voice_confirm');
+        setSttStatus('processing');
         setRecognizedText("텍스트로 변환하고 있어요...");
 
         try {
-          // 백엔드 API 호출 (FastAPI 기본 주소인 localhost:8000 기준)
           const res = await fetch('http://localhost:8000/speech', { 
             method: 'POST', 
             body: formData 
@@ -50,22 +55,23 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
           const data = await res.json();
           
           if (res.ok && data.text) {
-            setRecognizedText(data.text.trim()); // 성공 시 결과 텍스트 삽입 (수정 가능)
+            setRecognizedText(data.text.trim());
+            setSttStatus('success'); // 정상 변환 성공
           } else {
             setRecognizedText(data.error ? `오류: ${data.error}` : "음성을 인식하지 못했어요.");
+            setSttStatus('error'); // 텍스트 반환 실패 (에러)
           }
         } catch (err) {
           console.error("STT 서버 연동 에러:", err);
           setRecognizedText("서버와 연결할 수 없습니다.");
+          setSttStatus('error'); // 서버 연결 실패 (에러)
         } finally {
-          // 마이크 사용 완전 종료
           stream.getTracks().forEach(track => track.stop());
         }
       };
 
       mediaRecorder.current.start();
 
-      // 정확히 5초 뒤에 자동으로 녹음 중지
       voiceTimeout.current = setTimeout(() => {
         if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
           mediaRecorder.current.stop();
@@ -81,45 +87,72 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
   const handleStartVoice = () => {
     setStep('voice_input');
-    startRealSTT(); // 실제 STT 함수 호출
+    startRealSTT();
   };
 
-  const handleStopVoice = () => {
-    // 5초가 되기 전에 강제로 '입력 중지'를 누른 경우
+  const handleFinishInput = () => {
     if (voiceTimeout.current) clearTimeout(voiceTimeout.current);
     
     if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
-      mediaRecorder.current.onstop = null; // 취소 시 서버에 요청이 가지 않도록 onstop 초기화
       mediaRecorder.current.stop();
-      mediaRecorder.current.stream.getTracks().forEach(t => t.stop());
+    } else {
+      setStep('voice_confirm');
     }
-    
-    setRecognizedText(""); 
-    setStep('start');
   };
 
-  // =====================================================================
-  // [기능 추가 예정] 2. GPT를 활용한 프리셋 추출 (POST /preset)
-  // =====================================================================
-  const handleConfirmVoice = () => {
-    setStep('analyzing');
-    
-    // 임시 Mock 로직 (기존 기능 유지 - 나중에 fetchPresetsFromAI 연동 시 수정)
+  const handleManualWrite = () => {
+    setIsEditing(true);
+    setSttStatus('success'); // 붉은 에러 UI를 해제하고 일반 수정 가능 상태로 변경
+    setRecognizedText(""); // 기존 에러 메시지 비우기
     setTimeout(() => {
-      if (activeTags.length === 0 && inactiveTags.length === 0) {
-        setActiveTags([
-          { id: '1', label: '시민한길', originalType: 'selected' },
-          { id: '2', label: '30분', originalType: 'selected' },
-          { id: '3', label: '반려동물', originalType: 'selected' },
-        ]);
-        setInactiveTags([
-          { id: '4', label: '살리라산', originalType: 'recommended' },
-          { id: '5', label: '청지', originalType: 'recommended' },
-        ]);
-      }
+      textareaRef.current?.focus(); // 키보드 창 활성화 (포커스)
+    }, 100);
+  };
+
+  const fetchPresetsFromAI = async () => {
+    try {
+      setAnalyzeError(false);
+
+      const res = await fetch('http://localhost:8000/preset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: recognizedText })
+      });
+
+      if (!res.ok) throw new Error("서버에서 프리셋 데이터를 가져오지 못했습니다.");
+
+      // 백엔드에서 준 base_presets, sub_presets 파싱
+      const data = await res.json();
+      
+      const basePresets = data.base_presets.map((t: string, i: number) => ({ 
+        id: `base_${i}`, 
+        label: t, 
+        originalType: 'selected' 
+      }));
+      
+      const subPresets = data.sub_presets.map((t: string, i: number) => ({ 
+        id: `sub_${i}`, 
+        label: t, 
+        originalType: 'recommended' 
+      }));
+      
+      setActiveTags(basePresets);
+      setInactiveTags(subPresets);
       setStep('preset');
       setTagError(false);
-    }, 2000);
+
+    } catch (err) {
+      console.error("프리셋 추출 실패", err);
+      setAnalyzeError(true);
+    }
+  };
+
+  const handleConfirmVoice = () => {
+    // 1. 분석 중 화면 띄우기
+    setStep('analyzing');
+    
+    // 2. 백엔드 API 연동 함수 호출 (기존의 setTimeout 더미 로직 완전 삭제)
+    fetchPresetsFromAI();
   };
 
   const handleSearchRoutes = () => {
@@ -226,41 +259,96 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
             <p className="text-[#1E40AF] font-bold text-[20px]">5초 후 자동으로 처리됩니다</p>
           </div>
           
-          <button onClick={handleStopVoice} className="w-full bg-[#FEE2E2] text-[#EF4444] py-6 rounded-2xl font-bold text-[22px] shadow-sm mt-4 active:scale-95 transition-transform">
-            입력 중지
+          <button onClick={handleFinishInput} className="w-full bg-[#3B82F6] text-[#FFFFFF] py-6 rounded-2xl font-bold text-[22px] shadow-sm mt-4 active:scale-95 transition-transform">
+            입력 완료
           </button>
         </div>
       )}
 
-      {/* ③ 입력 완료 */}
+      {/* ③ 입력 완료 및 에러 화면 */}
       {step === 'voice_confirm' && (
         <div className="flex-1 w-full px-6 flex flex-col items-center pt-16 pb-10 animate-pop-in">
+          <div className="absolute top-4 left-6 z-30">
+            <button 
+              onClick={() => {
+                setRecognizedText("");
+                setSttStatus('idle');
+                setIsEditing(false);
+                setStep('start');
+              }} 
+              className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform border border-gray-100"
+            >
+              <ArrowLeft size={30} color="#333" />
+            </button>
+          </div>
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-12">
             오늘은 어떤 시원한 길을<br/>걸을까요?
           </h2>
-          <div className="bg-[#3B82F6] rounded-full p-5 mb-10 shadow-md">
-            <Check size={48} color="#FFF" strokeWidth={3} />
-          </div>
+
+          {/* 1. 상태에 따른 아이콘 분기 처리 */}
+          {sttStatus === 'processing' && (
+            <div className="bg-[#3B82F6] rounded-full p-5 mb-10 shadow-md">
+              <Loader2 size={48} color="#FFF" strokeWidth={3} className="animate-spin" />
+            </div>
+          )}
+          {sttStatus === 'success' && (
+            <div className="bg-[#3B82F6] rounded-full p-5 mb-10 shadow-md">
+              <Check size={48} color="#FFF" strokeWidth={3} />
+            </div>
+          )}
+          {sttStatus === 'error' && (
+            <div className="bg-[#EF4444] rounded-full p-5 mb-10 shadow-md">
+              <AlertTriangle size={48} color="#FFF" strokeWidth={2.5} />
+            </div>
+          )}
           
-          <div className="bg-[#F0F7FF] p-8 rounded-[32px] w-full mb-8 shadow-sm flex items-center justify-center min-h-[140px]">
-             {/* 사용자가 직접 수정 가능한 영역 유지 */}
+          {/* 2. 에러 시 텍스트 박스 붉은색 계열로 변경 */}
+          <div className={`p-8 rounded-[32px] w-full mb-8 shadow-sm flex items-center justify-center min-h-[140px] transition-colors duration-300 ${
+            sttStatus === 'error' ? 'bg-[#FEF2F2] border-2 border-[#FECACA]' : 'bg-[#F0F7FF]'
+          }`}>
              <textarea
+                ref={textareaRef}
                 value={recognizedText}
                 onChange={(e) => setRecognizedText(e.target.value)}
-                className="w-full text-[24px] text-[#1E3A8A] font-black leading-relaxed text-center break-keep bg-transparent resize-none focus:outline-none"
+                disabled={sttStatus === 'processing' || sttStatus === 'error'}
+                readOnly={!isEditing}
+                className={`w-full text-[24px] font-black leading-relaxed text-center break-keep bg-transparent resize-none focus:outline-none ${
+                  sttStatus === 'error' ? 'text-[#991B1B]' : 'text-[#1E3A8A]'
+                }`}
                 rows={3}
               />
           </div>
           
-          <div className="bg-[#FEF9C3] text-[#A16207] p-5 rounded-2xl w-full text-[16px] font-bold flex items-center justify-center gap-3 mb-auto shadow-sm">
-            <span className="text-[20px]">💡</span> 문장을 눌러 직접 수정할 수 있어요!
-          </div>
+          {/* 상태에 따른 하단 안내 문구 분기 */}
+          {sttStatus === 'error' ? (
+            <div className="w-full flex flex-col gap-3 mb-auto">
+              <div className="bg-[#FEF2F2] text-[#B91C1C] p-5 rounded-2xl w-full text-[16px] font-bold flex items-center justify-center gap-3 shadow-sm">
+                <span className="text-[20px]">⚠️</span> 에러가 발생했습니다. 다시 시도해주세요.
+              </div>
+              <button onClick={handleManualWrite} className="w-full bg-white border-2 border-[#3B82F6] text-[#3B82F6] py-4 rounded-2xl font-bold text-[18px] active:bg-blue-50 transition-colors shadow-sm">
+                직접 작성하기
+              </button>
+            </div>
+          ) : (
+            <div className="mb-auto" /> /* 💡 박스 완전히 삭제 후 버튼 여백 유지를 위해 빈 div만 남김 */
+          )}
 
           <div className="flex gap-4 w-full mt-6">
-            <button onClick={handleStartVoice} className="flex-1 bg-[#F0F7FF] text-[#3B82F6] py-6 rounded-2xl font-bold text-[22px] active:scale-95 transition-transform shadow-sm">
-              다시 말하기
+            <button 
+              onClick={handleManualWrite} 
+              className="flex-1 bg-[#F0F7FF] text-[#3B82F6] py-6 rounded-2xl font-bold text-[22px] active:scale-95 transition-transform shadow-sm"
+            >
+              직접 쓰기
             </button>
-            <button onClick={handleConfirmVoice} className="flex-1 bg-[#3B82F6] text-white py-6 rounded-2xl font-bold text-[22px] shadow-md active:scale-95 transition-transform">
+            <button 
+              onClick={handleConfirmVoice} 
+              disabled={sttStatus === 'processing' || sttStatus === 'error'}
+              className={`flex-1 py-6 rounded-2xl font-bold text-[22px] shadow-md transition-all duration-300 ${
+                (sttStatus === 'processing' || sttStatus === 'error') 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-[#3B82F6] text-white active:scale-95'
+              }`}
+            >
               확인
             </button>
           </div>
@@ -270,20 +358,45 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       {/* ④ 프리셋 추천 중 & ⑦ 경로 탐색 중 */}
       {(step === 'analyzing' || step === 'searching') && (
         <div className="flex-1 w-full px-6 flex flex-col items-center justify-center animate-pop-in">
-          <div className="bg-[#3B82F6] rounded-full p-8 shadow-lg mb-12 animate-pulse flex items-center justify-center">
-            <Search size={72} color="#FFF" strokeWidth={2.5} className="mr-2" />
-          </div>
-          <h2 className="text-[32px] font-black text-gray-800 text-center mb-6 leading-tight break-keep">
-            {step === 'analyzing' ? '프리셋을 분석하고\n있어요!' : '당신에게 딱 맞는\n경로를 찾고 있어요!'}
-          </h2>
-          <p className="text-[20px] text-gray-400 font-bold mb-12 text-center leading-relaxed">
-            {step === 'analyzing' ? '당신의 말을 분석해서\n프리셋을 만들고 있어요!' : '조금만 기다려주세요...'}
-          </p>
-          <div className="flex gap-3">
-            <div className="w-4 h-4 bg-[#3B82F6] rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-            <div className="w-4 h-4 bg-[#8BB4F6] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-            <div className="w-4 h-4 bg-[#D1E3FF] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-          </div>
+          
+          {/* [추가된 부분] 분석 중 에러가 발생했을 때 보여줄 경고 로딩 화면 */}
+          {step === 'analyzing' && analyzeError ? (
+            <>
+              <div className="bg-[#EF4444] rounded-full p-8 shadow-lg mb-12 flex items-center justify-center">
+                <AlertTriangle size={72} color="#FFF" strokeWidth={2.5} />
+              </div>
+              <h2 className="text-[32px] font-black text-gray-800 text-center mb-6 leading-tight break-keep">
+                프리셋을 분석할 수<br/>없습니다
+              </h2>
+              <p className="text-[20px] text-[#EF4444] font-bold mb-12 text-center leading-relaxed">
+                서버 연결에 실패했습니다.<br/>다시 시도해주세요.
+              </p>
+              <button 
+                onClick={() => setStep('voice_confirm')} 
+                className="w-full bg-[#3B82F6] text-white py-6 rounded-2xl font-bold text-[24px] shadow-md active:bg-blue-600 transition-colors mt-auto mb-6"
+              >
+                돌아가기
+              </button>
+            </>
+          ) : (
+            /* 기존의 정상적인 분석/탐색 로딩 화면 */
+            <>
+              <div className="bg-[#3B82F6] rounded-full p-8 shadow-lg mb-12 animate-pulse flex items-center justify-center">
+                <Search size={72} color="#FFF" strokeWidth={2.5} className="mr-2" />
+              </div>
+              <h2 className="text-[32px] font-black text-gray-800 text-center mb-6 leading-tight break-keep">
+                {step === 'analyzing' ? '프리셋을 분석하고\n있어요!' : '당신에게 딱 맞는\n경로를 찾고 있어요!'}
+              </h2>
+              <p className="text-[20px] text-gray-400 font-bold mb-12 text-center leading-relaxed">
+                {step === 'analyzing' ? '당신의 말을 분석해서\n프리셋을 만들고 있어요!' : '조금만 기다려주세요...'}
+              </p>
+              <div className="flex gap-3">
+                <div className="w-4 h-4 bg-[#3B82F6] rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+                <div className="w-4 h-4 bg-[#8BB4F6] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <div className="w-4 h-4 bg-[#D1E3FF] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+              </div>
+            </>
+          )}
         </div>
       )}
 
