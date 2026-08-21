@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path 
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -9,12 +9,20 @@ from app.models.db import init_db
 from app.api.routes import router as route_router
 
 import os
-from fastapi import UploadFile, File
 import whisper
 import tempfile
+from pydantic import BaseModel
+from typing import List
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+
+class PresetRequest(BaseModel):
+    text: str
+
+class PresetResponse(BaseModel):
+    base_presets: List[str]
+    sub_presets: List[str]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,8 +68,19 @@ async def speech_to_text(audio: UploadFile = File(...)):
         # 3. 임시 파일 삭제
         os.remove(temp_file_path)
 
-# BASE_DIR = Path(__file__).resolve().parents[1]
-# FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+@app.post("/preset", response_model=PresetResponse)
+async def extract_presets(request: PresetRequest):
+    user_text = request.text
+    
+    # TODO: 추후 여기에 GPT/LLM 연동을 통한 실제 태그 추출 로직 작성
+    # 현재는 프론트엔드 연동 테스트를 위해 더미 데이터를 반환합니다.
+    dummy_base_presets = ["시민한길", "30분", "반려동물"]
+    dummy_sub_presets = ["그늘", "살리라산", "청지"]
+    
+    return PresetResponse(
+        base_presets=dummy_base_presets,
+        sub_presets=dummy_sub_presets
+    )
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
 # app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")
