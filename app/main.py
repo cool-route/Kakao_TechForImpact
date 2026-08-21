@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path 
 
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -9,6 +9,7 @@ from app.models.db import init_db
 from app.api.routes import router as route_router
 
 import os
+import json
 import whisper
 import tempfile
 from pydantic import BaseModel
