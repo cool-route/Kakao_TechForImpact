@@ -102,10 +102,12 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
   const handleManualWrite = () => {
     setIsEditing(true);
-    setSttStatus('success'); // 붉은 에러 UI를 해제하고 일반 수정 가능 상태로 변경
-    setRecognizedText(""); // 기존 에러 메시지 비우기
+    if (sttStatus === 'error') {
+      setRecognizedText(""); 
+    }
+    setSttStatus('success');
     setTimeout(() => {
-      textareaRef.current?.focus(); // 키보드 창 활성화 (포커스)
+      textareaRef.current?.focus();
     }, 100);
   };
 
