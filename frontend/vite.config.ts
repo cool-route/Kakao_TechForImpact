@@ -40,6 +40,7 @@ export default defineConfig({
       '/routes': 'http://localhost:8000',
       '/shelters': 'http://localhost:8000',
       '/route': 'http://localhost:8000',
+      '/preset': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
       '/healthcheck': 'http://127.0.0.1:8000',
     },

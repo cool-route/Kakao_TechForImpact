@@ -121,9 +121,20 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
       if (!res.ok) throw new Error("서버에서 프리셋 데이터를 가져오지 못했습니다.");
 
-      // 백엔드에서 준 base_presets, sub_presets 파싱
       const data = await res.json();
-      
+
+      // [임시] GPT 연동 전 단계 — 백엔드가 아직 received_text만 돌려줌
+      // base_presets/sub_presets가 없으면 여기서 수신 확인만 하고 넘어감
+      if (!data.base_presets || !data.sub_presets) {
+        console.log('[preset] 텍스트 수신 확인:', data.received_text);
+        setActiveTags([]);
+        setInactiveTags([]);
+        setStep('preset');
+        setTagError(false);
+        return;
+      }
+
+      // 백엔드에서 준 base_presets, sub_presets 파싱 (GPT 연동 후 실제로 쓰일 경로)
       const basePresets = data.base_presets.map((t: string, i: number) => ({ 
         id: `base_${i}`, 
         label: t, 
