@@ -112,53 +112,41 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   };
 
   const fetchPresetsFromAI = async () => {
-    try {
-      setAnalyzeError(false);
+  try {
+    setAnalyzeError(false);
 
-      const res = await fetch('http://localhost:8000/preset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: recognizedText })
-      });
+    const res = await fetch('http://localhost:8000/preset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: recognizedText })
+    });
 
-      if (!res.ok) throw new Error("서버에서 프리셋 데이터를 가져오지 못했습니다.");
+    if (!res.ok) throw new Error("서버에서 프리셋 데이터를 가져오지 못했습니다.");
 
-      const data = await res.json();
+    const data = await res.json();
 
-      // [임시] GPT 연동 전 단계 — 백엔드가 아직 received_text만 돌려줌
-      // base_presets/sub_presets가 없으면 여기서 수신 확인만 하고 넘어감
-      if (!data.base_presets || !data.sub_presets) {
-        console.log('[preset] 텍스트 수신 확인:', data.received_text);
-        setActiveTags([]);
-        setInactiveTags([]);
-        setStep('preset');
-        setTagError(false);
-        return;
-      }
+    const basePresets = (data.base_presets ?? []).map((p: { id: string; label: string }) => ({
+      id: p.id,
+      label: p.label,
+      originalType: 'selected' as const,
+    }));
 
-      // 백엔드에서 준 base_presets, sub_presets 파싱 (GPT 연동 후 실제로 쓰일 경로)
-      const basePresets = data.base_presets.map((t: string, i: number) => ({ 
-        id: `base_${i}`, 
-        label: t, 
-        originalType: 'selected' 
-      }));
-      
-      const subPresets = data.sub_presets.map((t: string, i: number) => ({ 
-        id: `sub_${i}`, 
-        label: t, 
-        originalType: 'recommended' 
-      }));
-      
-      setActiveTags(basePresets);
-      setInactiveTags(subPresets);
-      setStep('preset');
-      setTagError(false);
+    const subPresets = (data.sub_presets ?? []).map((p: { id: string; label: string }) => ({
+      id: p.id,
+      label: p.label,
+      originalType: 'recommended' as const,
+    }));
 
-    } catch (err) {
-      console.error("프리셋 추출 실패", err);
-      setAnalyzeError(true);
-    }
-  };
+    setActiveTags(basePresets);
+    setInactiveTags(subPresets);
+    setStep('preset');
+    setTagError(false);
+
+  } catch (err) {
+    console.error("프리셋 추출 실패", err);
+    setAnalyzeError(true);
+  }
+};
 
   const handleConfirmVoice = () => {
     // 1. 분석 중 화면 띄우기

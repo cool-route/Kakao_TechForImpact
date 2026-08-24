@@ -42,3 +42,5 @@ class RecommendedRouteResponse(BaseModel):
 
 class NearestRouteResponse(RecommendedRouteResponse):
     distance_to_user_m: float = Field(..., description="사용자 위치에서 가장 가까운 엣지까지의 거리 (미터)")
+
+
