@@ -185,8 +185,8 @@ async def local_server(request: dict):
     text = str(request.get("text") or "")
     if not text:
         return {
-            "base_presets": ["with_elder", "walk_30m"],
-            "sub_presets": ["shelter_route", "flat_path"],
+            "base_presets": ["base1", "base2"],
+            "sub_presets": ["sub1", "sub2"],
         }
 
     return _build_local_preset_response(text)
@@ -218,8 +218,7 @@ async def extract_presets(request: ConfirmedTextRequest):
         base_list = preset_data.get("base_presets") or []
         sub_list = preset_data.get("sub_presets") or []
 
-        # 프론트엔드의 화면 제약을 위해 만약 강제로 3개까지만 자르고 싶다면 아래처럼 슬라이싱할 수 있습니다.
-        # sub_list = sub_list[:3] 
+        base_list = base_list[:2] 
 
         print(f"[preset] text:", request.text)
         print(f"[preset] base_presets: {base_list} / sub_presets: {sub_list}\n")
