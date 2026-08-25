@@ -18,8 +18,8 @@ def seed_routes() -> int:
         conn.execute("DELETE FROM routes")
         conn.executemany(
             """
-            INSERT INTO routes (name, mode, heat_score_avg, distance_m, geojson)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO routes (name, mode, heat_score_avg, distance_m, geojson, tags)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             [
                 (
@@ -28,6 +28,7 @@ def seed_routes() -> int:
                     route["heat_score_avg"],
                     route["distance_m"],
                     json.dumps(route["geojson"], ensure_ascii=False),
+                    json.dumps(route.get("tags", []), ensure_ascii=False),
                 )
                 for route in routes
             ],

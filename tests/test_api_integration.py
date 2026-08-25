@@ -105,6 +105,6 @@ def test_get_routes_http(api_base_url):
     status, body = _request_json("GET", f"{api_base_url}/routes")
 
     assert status == 200
-    assert len(body) == 14
-    assert {"id", "name", "mode", "heat_score_avg", "distance_m", "geojson", "shelters", "is_dummy"} <= set(body[0])
+    assert len(body) == 80
+    assert {"id", "name", "mode", "heat_score_avg", "distance_m", "geojson", "shelters", "is_dummy", "tags"} <= set(body[0])
     assert all(route["mode"] == "노약자" for route in body)

@@ -6,7 +6,7 @@ def test_validate_preset_output_accepts_known_presets():
     payload = {
         "intent": "시원한 경로를 짧게 탐색하고 싶음",
         "base_presets": [
-            {"id": "cool_path", "label": "시원한길", "category": "experience", "source": "stt", "score": 0.97},
+            {"id": "with_elder", "label": "어르신과", "category": "condition", "source": "stt", "score": 0.97},
             {"id": "walk_30m", "label": "30분", "category": "duration", "source": "stt", "score": 0.9},
         ],
         "sub_presets": [
@@ -15,7 +15,7 @@ def test_validate_preset_output_accepts_known_presets():
         "confidence": 0.88,
         "needs_confirmation": False,
         "reasons": [
-            {"preset_id": "cool_path", "reason": "시원한 길을 원한다는 뜻임"},
+            {"preset_id": "with_elder", "reason": "어르신과 함께 걷는다는 뜻임"},
             {"preset_id": "walk_30m", "reason": "30분 정도 걷고 싶다는 뜻임"},
         ],
         "unmatched_tokens": ["짧게"],

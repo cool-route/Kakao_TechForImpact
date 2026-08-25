@@ -23,5 +23,6 @@ def test_post_route_handler():
 def test_get_routes_handler_returns_five():
     routes = list_routes(mode=None)
 
-    assert len(routes) == 14
+    assert len(routes) == 80
     assert all(route["mode"] == "노약자" for route in routes)
+    assert all("tags" in route for route in routes)

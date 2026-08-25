@@ -38,6 +38,7 @@ def test_select_top_k_returns_three_and_tags(monkeypatch):
     for r in top:
         assert "tags" in r
         assert "match_score" in r
+        assert any(tag.startswith("walk_") for tag in r["tags"])
 
 
 def test_select_top_k_prefers_given_tag(monkeypatch):
@@ -47,11 +48,11 @@ def test_select_top_k_prefers_given_tag(monkeypatch):
     import app.services.route_service as rs
     monkeypatch.setattr(rs, "get_recommended_routes", lambda mode=None: [r_with, r_without])
 
-    top = select_top_k_routes(preferred_tags=["쉼터많음"], k=2, mode=None)
+    top = select_top_k_routes(preferred_tags=["shelter_route"], k=2, mode=None)
 
     assert len(top) == 2
     # first result should include the preferred tag
-    assert "쉼터많음" in top[0]["tags"]
+    assert "shelter_route" in top[0]["tags"]
 
 
 def test_select_top_k_respects_mode_filter(monkeypatch):

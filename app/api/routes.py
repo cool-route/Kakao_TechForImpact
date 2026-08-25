@@ -1,9 +1,12 @@
+import httpx
 import networkx as nx
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import MODES
 from app.schemas.routes import Mode, NearestRouteResponse, RecommendedRouteResponse, RouteRequest, RouteResponse, ShelterResponse
-from app.schemas.preset_extraction import PresetExtractionEcho, PresetExtractionRequest
+from app.schemas.preset_extraction import PresetExtractionRequest, PresetExtractionResult
+from app.services.agent_client import call_preset_agent
+from app.services.preset_parser import extract_preset_ids, classify_presets
 from app.services.route_service import (
     find_nearest_route,
     get_all_shelters,
@@ -88,12 +91,29 @@ def list_top_routes(tags: list[str] | None = Query(default=None, description="�
     return select_top_k_routes(preferred_tags=tags, k=3, mode=mode)
 
 
-# @router.post(
-#     "/preset",
-#     summary="[임시] STT 텍스트 수신 확인",
-#     description="프론트에서 확인/수정한 STT 텍스트를 받습니다. GPT 프리셋 추출 연동 전 단계로, 받은 텍스트를 그대로 돌려줍니다.",
-#     response_model=PresetExtractionEcho,
-# )
-# def receive_preset_text(request: PresetExtractionRequest) -> dict:
-#     print("[preset] received text:", request.text)
-#     return PresetExtractionEcho(received_text=request.text)
+@router.post(
+    "/preset",
+    summary="STT 텍스트 → 프리셋 추출 → Top-k 경로 추천",
+    description="프론트에서 확인/수정한 STT 텍스트를 클라이밋팟 에이전트로 보내 프리셋을 추출하고, 검증된 프리셋으로 Top-3 경로를 반환합니다.",
+    response_model=PresetExtractionResult,
+)
+async def receive_preset_text(request: PresetExtractionRequest) -> dict:
+    try:
+        agent_text = await call_preset_agent(request.text)
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=502, detail="클라이밋팟 에이전트 호출 실패") from exc
+    except httpx.TimeoutException as exc:
+        raise HTTPException(status_code=504, detail="클라이밋팟 에이전트 응답 시간 초과") from exc
+
+    preset_ids, dropped_ids = extract_preset_ids(agent_text)
+    base_presets, sub_presets = classify_presets(preset_ids)
+
+    routes = select_top_k_routes(preferred_tags=preset_ids, k=3, mode=None)
+
+    return {
+        "preset_ids": preset_ids,
+        "base_presets": base_presets,
+        "sub_presets": sub_presets,
+        "dropped_ids": dropped_ids,
+        "routes": routes,
+    }
