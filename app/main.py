@@ -74,8 +74,8 @@ async def speech_to_text(audio: UploadFile = File(...)):
 @app.post("/localServer")
 async def local_server(request: dict):
     return {
-        "base_presets": ["base1", "base2", "base3"],
-        "sub_presets": ["sub1", "sub2", "sub3"]
+        "base_presets": ["base1", "base2", "a"],
+        "sub_presets": ["sub1", "sub2"]
     }
 
 # 해당 함수는 실제 백서버 주소를 기입한 후에 /api/routes.py에 옮길 예정
@@ -102,8 +102,7 @@ async def extract_presets(request: ConfirmedTextRequest):
         base_list = preset_data.get("base_presets") or []
         sub_list = preset_data.get("sub_presets") or []
 
-        # 프론트엔드의 화면 제약을 위해 만약 강제로 3개까지만 자르고 싶다면 아래처럼 슬라이싱할 수 있습니다.
-        # sub_list = sub_list[:3] 
+        base_list = base_list[:2] 
 
         print(f"[preset] text:", request.text)
         print(f"[preset] base_presets: {base_list} / sub_presets: {sub_list}\n")

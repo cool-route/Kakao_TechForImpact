@@ -24,6 +24,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isEditingRef = useRef(false);
 
   const startRealSTT = async () => {
     try {
@@ -32,6 +33,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       audioChunks.current = [];
       setSttStatus('idle');
       setIsEditing(false);
+      isEditingRef.current = false;
 
       mediaRecorder.current.ondataavailable = (e) => { 
         if (e.data.size > 0) audioChunks.current.push(e.data); 
@@ -53,6 +55,10 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
             body: formData 
           });
           const data = await res.json();
+
+          if (isEditingRef.current) {
+            return; 
+          }
           
           if (res.ok && data.text) {
             setRecognizedText(data.text.trim());
@@ -63,6 +69,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
           }
         } catch (err) {
           console.error("STT 서버 연동 에러:", err);
+          if (isEditingRef.current) return;
           setRecognizedText("서버와 연결할 수 없습니다.");
           setSttStatus('error'); // 서버 연결 실패 (에러)
         } finally {
@@ -102,9 +109,12 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
   const handleManualWrite = () => {
     setIsEditing(true);
+    isEditingRef.current = true;
+
     if (sttStatus === 'error') {
       setRecognizedText(""); 
     }
+    
     setSttStatus('success');
     setTimeout(() => {
       textareaRef.current?.focus();
@@ -437,7 +447,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
           <div className="absolute bottom-8 left-6 right-6 flex flex-col z-30 pointer-events-none">
              <div className={`mb-3 text-center text-[#E74C3C] font-bold text-[18px] bg-[#FCECEC]/95 backdrop-blur-sm py-4 px-5 rounded-2xl border border-[#F5B7B1] transition-all duration-300 ${tagError ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              태그는 3개까지 선택해주세요!
+              태그는 총 3개까지 선택해주세요!
             </div>
             
             <button onClick={handleSearchRoutes} className="w-full pointer-events-auto bg-[#0047AB] text-white py-6 rounded-2xl font-bold text-[24px] flex justify-center items-center gap-2 shadow-[0_10px_30px_rgba(0,71,171,0.3)] active:bg-[#003380] active:scale-[0.98] transition-transform">
