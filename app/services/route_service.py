@@ -156,14 +156,55 @@ def _place_tag_id(location_label: str | None, route_id: int | None = None) -> st
     return place_ids[index]
 
 
+def _place_tag_ids(locations: list[str] | None, route_id: int | None = None) -> list[str]:
+    if not locations:
+        maps = _load_preset_catalog_maps()
+        place_ids = maps["category_to_ids"].get("place", [])
+        if not place_ids:
+            return []
+        index = (route_id - 1) % len(place_ids) if route_id else 0
+        return [place_ids[index]]
+
+    maps = _load_preset_catalog_maps()
+    label_map = maps["label_to_id"]
+    alias_map = maps["alias_to_id"]
+
+    place_tags: list[str] = []
+    for loc in locations:
+        tag_id = label_map.get(loc) or alias_map.get(loc)
+        if tag_id and tag_id not in place_tags:
+            place_tags.append(tag_id)
+
+    if not place_tags:
+        place_ids = maps["category_to_ids"].get("place", [])
+        if place_ids:
+            index = (route_id - 1) % len(place_ids) if route_id else 0
+            place_tags.append(place_ids[index])
+
+    return place_tags
+
+
 def _duration_tag_id(duration_label: str | None, distance_m: float) -> str:
     maps = _load_preset_catalog_maps()
     label_map = maps["label_to_id"]
+    alias_map = maps["alias_to_id"]
 
     if duration_label:
-        tag_id = label_map.get(duration_label)
+        tag_id = label_map.get(duration_label) or alias_map.get(duration_label)
         if tag_id:
             return tag_id
+
+        clean_label = duration_label.strip()
+        if "10분" in clean_label:
+            return label_map.get("10분") or "walk_10m"
+        if "15분" in clean_label:
+            return label_map.get("15분") or "walk_15m"
+        if "30분" in clean_label:
+            return label_map.get("30분") or "walk_30m"
+        if "1시간" in clean_label:
+            return label_map.get("1시간") or "walk_60m"
+        if "2시간" in clean_label:
+            return label_map.get("2시간 이상") or "walk_120m_plus"
 
     if distance_m <= 700:
         return label_map.get("10분") or "walk_10m"
@@ -189,10 +230,11 @@ def _build_route_tags_from_meta(meta: dict, route_id: int | None = None) -> list
     if duration_tag not in tags:
         tags.append(duration_tag)
 
-    location = meta.get("location") or []
-    place_tag = _place_tag_id(location[0] if location else None, route_id=route_id)
-    if place_tag and place_tag not in tags:
-        tags.append(place_tag)
+    locations = meta.get("location") or []
+    place_tags = _place_tag_ids(locations, route_id=route_id)
+    for p_tag in place_tags:
+        if p_tag not in tags:
+            tags.append(p_tag)
 
     heat = meta.get("heat_score") or {}
     heat_value = float(heat.get("value") or 0.0)
@@ -247,9 +289,10 @@ def _build_route_tags_from_meta(meta: dict, route_id: int | None = None) -> list
     # Ensure mandatory categories are represented even if heuristic tags are sparse.
     if duration_tag not in seen:
         deduped.insert(1 if deduped else 0, duration_tag)
-    if place_tag and place_tag not in seen:
-        insert_at = 2 if len(deduped) >= 2 else len(deduped)
-        deduped.insert(insert_at, place_tag)
+    for p_idx, p_tag in enumerate(place_tags):
+        if p_tag not in seen:
+            insert_at = (2 + p_idx) if len(deduped) >= (2 + p_idx) else len(deduped)
+            deduped.insert(insert_at, p_tag)
 
     if not any(tag in feature_candidates for tag in deduped):
         deduped.append(_normalize_tag_id("시원한길") if heat_value <= 60 else _normalize_tag_id("평지"))

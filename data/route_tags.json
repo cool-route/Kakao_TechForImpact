@@ -5,27 +5,942 @@
     {
       "route_id": 1,
       "mode": "노약자",
-      "tags": ["시원한길", "30분", "쉼터많음", "평지"]
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_1",
+        "cool_path",
+        "low_tmrt",
+        "flat_path"
+      ]
     },
     {
       "route_id": 2,
       "mode": "노약자",
-      "tags": ["시원한길", "30분", "그늘많음", "쉼터많음"]
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "cool_path",
+        "low_tmrt",
+        "flat_path"
+      ]
     },
     {
       "route_id": 3,
       "mode": "노약자",
-      "tags": ["시원한길", "45분", "쉼터많음", "평지"]
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_2",
+        "flat_path"
+      ]
     },
     {
       "route_id": 4,
       "mode": "노약자",
-      "tags": ["시원한길", "30분", "조용한길", "편의점"]
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_3",
+        "cool_path",
+        "low_tmrt",
+        "shady_path",
+        "green_path"
+      ]
     },
     {
       "route_id": 5,
       "mode": "노약자",
-      "tags": ["시원한길", "30분", "쉼터많음", "편의점"]
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_1",
+        "cool_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 6,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_2",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 7,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "pungdeokcheon_1",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 8,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_1",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 9,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 10,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 11,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "sinbong",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 12,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "sinbong",
+        "cool_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 13,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "cool_path"
+      ]
+    },
+    {
+      "route_id": 14,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 15,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "jukjeon_2",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 16,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "jukjeon_1",
+        "cool_path",
+        "low_tmrt",
+        "shady_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 17,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "cool_path",
+        "low_tmrt",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 18,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "cool_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 19,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "cool_path"
+      ]
+    },
+    {
+      "route_id": 20,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "cool_path",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 21,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "jukjeon_3",
+        "cool_path",
+        "low_tmrt",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 22,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "jukjeon_1",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 23,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "jukjeon_1",
+        "jukjeon_3",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 24,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "pungdeokcheon_1",
+        "pungdeokcheon_2",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 25,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "pungdeokcheon_1",
+        "pungdeokcheon_2",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 26,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "sinbong",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 27,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 28,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "jukjeon_3",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 29,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "seongbok",
+        "pungdeokcheon_2",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 30,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "sinbong",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 31,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_1",
+        "jukjeon_3",
+        "cool_path",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 32,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_2",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 33,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_3",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 34,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_1",
+        "cool_path",
+        "low_tmrt",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 35,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_3",
+        "jukjeon_1",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 36,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "pungdeokcheon_2",
+        "sanghyeon_2",
+        "sanghyeon_1",
+        "seongbok",
+        "sinbong",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 37,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "pungdeokcheon_1",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 38,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_3",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 39,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "dongcheon",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 40,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "seongbok",
+        "pungdeokcheon_2",
+        "sinbong",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 41,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_1",
+        "jukjeon_3",
+        "cool_path",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 42,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "pungdeokcheon_2",
+        "seongbok",
+        "sanghyeon_2",
+        "sanghyeon_1",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 43,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "dongcheon",
+        "jukjeon_2",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 44,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_3",
+        "jukjeon_1",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 45,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "jukjeon_3",
+        "jukjeon_1",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 46,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_1",
+        "jukjeon_3",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 47,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_3",
+        "jukjeon_1",
+        "jukjeon_2",
+        "cool_path",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 48,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "pungdeokcheon_2",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "sanghyeon_1",
+        "seongbok",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 49,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_3",
+        "jukjeon_1",
+        "jukjeon_2",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 50,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_1",
+        "jukjeon_3",
+        "jukjeon_2",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 51,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_3",
+        "jukjeon_1",
+        "jukjeon_2",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 52,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_3",
+        "jukjeon_1",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 53,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_1",
+        "jukjeon_3",
+        "jukjeon_2",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 54,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_1",
+        "jukjeon_3",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 55,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_3",
+        "jukjeon_2",
+        "jukjeon_1",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 56,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "pungdeokcheon_2",
+        "pungdeokcheon_1",
+        "jukjeon_2",
+        "sanghyeon_2",
+        "sanghyeon_1",
+        "seongbok",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 57,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "sanghyeon_1",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "seongbok",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 58,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_1",
+        "jukjeon_3",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 59,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "jukjeon_3",
+        "jukjeon_1",
+        "cool_path",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 60,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_120m_plus",
+        "pungdeokcheon_2",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "sanghyeon_1",
+        "seongbok",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 61,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "sanghyeon_1",
+        "sanghyeon_2",
+        "cool_path",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 62,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "sanghyeon_1",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "cool_path",
+        "low_tmrt",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 63,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "jukjeon_2",
+        "flat_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 64,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "pungdeokcheon_1",
+        "flat_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 65,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "sanghyeon_1",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "cool_path",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 66,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "sanghyeon_1",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "cool_path",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 67,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "sanghyeon_1",
+        "sanghyeon_3",
+        "sanghyeon_2",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 68,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_60m",
+        "sanghyeon_2",
+        "sanghyeon_3",
+        "sanghyeon_1",
+        "green_path",
+        "shelter_route",
+        "shelter_rich"
+      ]
+    },
+    {
+      "route_id": 69,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 70,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "pungdeokcheon_2",
+        "seongbok",
+        "green_path"
+      ]
+    },
+    {
+      "route_id": 71,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "pungdeokcheon_1",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 72,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 73,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "pungdeokcheon_1",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 74,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "cool_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 75,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "sinbong",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 76,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_10m",
+        "dongcheon",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 77,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "pungdeokcheon_1",
+        "dongcheon",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 78,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "green_path",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 79,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "dongcheon",
+        "pungdeokcheon_1",
+        "flat_path"
+      ]
+    },
+    {
+      "route_id": 80,
+      "mode": "노약자",
+      "tags": [
+        "with_elder",
+        "walk_30m",
+        "pungdeokcheon_2",
+        "cool_path",
+        "flat_path"
+      ]
     }
   ],
   "tag_weights": {
@@ -52,7 +967,11 @@
   "scoring_rules": {
     "match_score": "sum(weight for each matched tag)",
     "mismatch_penalty": "0.15 per explicitly excluded tag",
-    "tie_breakers": ["lower_heat_score_avg", "shorter_distance_m", "more_shelters"],
+    "tie_breakers": [
+      "lower_heat_score_avg",
+      "shorter_distance_m",
+      "more_shelters"
+    ],
     "top_k": 3
   }
 }
