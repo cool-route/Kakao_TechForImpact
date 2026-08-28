@@ -203,38 +203,38 @@ export default function MapPreviewScreen({ route, kakaoApiKey, onBack, onStartNa
         </div>
 
         <div className="px-8 pb-5 border-b border-gray-100 shrink-0">
-          <h3 className="text-[28px] font-black text-gray-800 mb-2">{route.name}</h3>
-          <div className="flex gap-5 text-lg font-bold text-gray-500">
+          <h3 className="text-[34px] font-black text-gray-800 mb-3">{route.name}</h3>
+          <div className="flex gap-5 text-[22px] font-bold text-gray-500">
             <span className="flex items-center gap-1.5">📏 {route.distance}</span>
             <span className="flex items-center gap-1.5">⏱ {route.duration}</span>
           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto px-8 py-6" style={{ scrollbarWidth: 'none' }}>
-          <h4 className="font-bold text-gray-800 mb-5 text-xl">경로 상세</h4>
-          <div className="relative pl-4 border-l-[3px] border-gray-200 ml-2 flex flex-col gap-8 mb-10">
+          <h4 className="font-bold text-gray-800 mb-6 text-[24px]">경로 상세</h4>
+          <div className="relative pl-5 border-l-[4px] border-gray-200 ml-2 flex flex-col gap-10 mb-12">
             <div className="relative">
-              <div className="absolute -left-[23px] top-1 w-4 h-4 bg-green-500 rounded-full border-[3px] border-white ring-1 ring-green-200"></div>
-              <p className="font-black text-gray-800 text-[18px]">출발 · 임시 출발지</p>
-              <p className="text-[14px] font-bold text-gray-400 mt-1">0km · 00:00</p>
+              <div className="absolute -left-[28px] top-1 w-5 h-5 bg-green-500 rounded-full border-[3px] border-white ring-1 ring-green-200"></div>
+              <p className="font-black text-gray-800 text-[22px]">출발 · 임시 출발지</p>
+              <p className="text-[18px] font-bold text-gray-400 mt-1">0km · 00:00</p>
             </div>
             <div className="relative">
-              <div className="absolute -left-[23px] top-1 w-4 h-4 bg-red-500 rounded-full border-[3px] border-white ring-1 ring-red-200"></div>
-              <p className="font-black text-gray-800 text-[18px]">{route.name} 도착</p>
-              <p className="text-[14px] font-bold text-gray-400 mt-1">{route.distance} · {route.duration}</p>
+              <div className="absolute -left-[28px] top-1 w-5 h-5 bg-red-500 rounded-full border-[3px] border-white ring-1 ring-red-200"></div>
+              <p className="font-black text-gray-800 text-[22px] break-keep leading-snug">{route.name} 도착</p>
+              <p className="text-[18px] font-bold text-gray-400 mt-1">{route.distance} · {route.duration}</p>
             </div>
           </div>
 
-          <h4 className="font-bold text-gray-800 mb-5 text-xl">기상 및 쉼터 정보</h4>
+          <h4 className="font-bold text-gray-800 mb-6 text-[24px]">기상 및 쉼터 정보</h4>
           <div className="grid grid-cols-2 gap-4 mb-4">
             {weatherStats.map((stat, i) => (
-              <div key={i} className="flex items-center gap-4 rounded-2xl p-4" style={{ backgroundColor: stat.bg }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/70">
+              <div key={i} className="flex items-center gap-3 rounded-3xl p-5" style={{ backgroundColor: stat.bg }}>
+                <div className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center bg-white/70">
                   {stat.icon}
                 </div>
                 <div>
-                  <div className="text-[13px] font-bold text-gray-600">{stat.label}</div>
-                  <div className="text-[17px] font-black text-gray-800">{stat.value}</div>
+                  <div className="text-[16px] font-bold text-gray-600">{stat.label}</div>
+                  <div className="text-[22px] font-black text-gray-800">{stat.value}</div>
                 </div>
               </div>
             ))}
@@ -242,11 +242,11 @@ export default function MapPreviewScreen({ route, kakaoApiKey, onBack, onStartNa
         </div>
 
         <div className="p-6 pt-3 bg-white flex gap-3 shrink-0">
-          <button onClick={onBack} className="flex-1 bg-white border-2 border-[#3B82F6] text-[#3B82F6] py-5 rounded-2xl font-bold text-[20px] active:bg-blue-50 transition-colors">
+          <button onClick={onBack} className="flex-1 bg-white border-[3px] border-[#3B82F6] text-[#3B82F6] py-6 rounded-2xl font-black text-[20px] active:bg-blue-50 transition-colors">
             다른 경로 보기
           </button>
-          <button onClick={onStartNavigating} className="flex-1 bg-[#3B82F6] text-white py-5 rounded-2xl font-bold text-[20px] shadow-md active:bg-blue-600 transition-colors">
-            이 경로로 할게요
+          <button onClick={onStartNavigating} className="flex-1 bg-[#3B82F6] text-white py-6 rounded-2xl font-black text-[20px] shadow-md active:bg-blue-600 transition-colors">
+            이 경로로 결정
           </button>
         </div>
       </div>

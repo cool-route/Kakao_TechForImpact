@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import proj4 from 'proj4';
 import type { RouteInfo } from '../App';
 
@@ -24,6 +24,7 @@ interface RouteResultScreenProps {
 
 function MiniMap({ route, apiKey }: { route: RouteInfo; apiKey: string }) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const [isMapLoading, setIsMapLoading] = useState(true);
 
   useEffect(() => {
     if (!apiKey) return;
@@ -79,6 +80,7 @@ function MiniMap({ route, apiKey }: { route: RouteInfo; apiKey: string }) {
         if (!bounds.isEmpty()) {
           map.setBounds(bounds, 16, 16, 16, 16); 
         }
+        setIsMapLoading(false);
       });
     };
 
@@ -111,14 +113,37 @@ function MiniMap({ route, apiKey }: { route: RouteInfo; apiKey: string }) {
     };
   }, [route, apiKey]);
 
-  // pointer-events-none: 터치 스크롤 시 지도에 걸리는 현상 방지
-  return <div ref={mapRef} className="w-full h-full pointer-events-none" />;
+  return (
+    <div className="relative w-full h-full pointer-events-none">
+      {isMapLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#F5F7F5]">
+          <Loader2 size={24} className="animate-spin text-[#3B82F6]" />
+        </div>
+      )}
+      <div ref={mapRef} className="w-full h-full" />
+    </div>
+  );
 }
 
 export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute, disableAnimation }: RouteResultScreenProps) {
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showTopArrow, setShowTopArrow] = useState(false);
+  const [showBottomArrow, setShowBottomArrow] = useState(false);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      setShowTopArrow(scrollTop > 10); // 위로 스크롤 가능하면 위 화살표
+      setShowBottomArrow(Math.ceil(scrollTop + clientHeight) < scrollHeight - 10); // 밑에 내용이 남았으면 아래 화살표
+    }
+  };
+
+  useEffect(() => {
+    setTimeout(handleScroll, 100); 
+  }, [routes, isLoading]);
 
   const apiItemToRouteInfo = (item: any, index: number): RouteInfo => {
     const features = item.geojson?.features ?? [];
@@ -205,36 +230,72 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
       </div>
 
       <div className="flex-1 overflow-y-auto flex flex-col gap-5 pb-6 overflow-x-hidden" style={{ scrollbarWidth: 'none' }}>
+        {showTopArrow && (
+          <div className="absolute top-[260px] left-0 right-0 flex justify-center z-20 pointer-events-none pt-2">
+            <div className="bg-white/95 rounded-full p-1 shadow-md animate-bounce border border-gray-100">
+              <ChevronUp size={32} color="#3B82F6" />
+            </div>
+          </div>
+        )}
+      <div 
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto flex flex-col gap-6 pb-6 overflow-x-hidden relative" 
+        style={{ scrollbarWidth: 'none' }}
+      >
         {isLoading ? (
           <div className="flex justify-center items-center h-full text-[#3B82F6] text-[20px] font-bold">경로 불러오는 중...</div>
         ) : (
          routes.map((route, i) => (
-            <button
-              key={route.id}
-              onClick={() => onSelectRoute(route)}
-              style={disableAnimation ? {} : {
-                animation: `slideInFromBottom 0.2s ease-out forwards`,
-                animationDelay: `${i * 0.08}s`,
-                opacity: 0,
-              }}
-              className={`bg-white border-[1.5px] border-gray-100 rounded-[28px] p-6 text-left active:scale-[0.98] transition-transform shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex items-center gap-5 ${disableAnimation ? 'opacity-100' : ''}`}
-            >
-              <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-[18px] shrink-0 shadow-sm">
-                {route.rank}
-              </div>
-              <div className="flex-1">
-                <p className="text-[24px] font-black text-gray-800 mb-2.5">{route.name}</p>
-                <div className="flex gap-4 text-[16px] text-gray-500 font-bold">
-                  <span className="flex items-center gap-1.5">📏 {route.distance}</span>
-                  <span className="flex items-center gap-1.5">⏱ {route.duration}</span>
-                </div>
-              </div>
-              <div className="w-[84px] h-[84px] bg-[#F5F7F5] rounded-2xl overflow-hidden shrink-0 shadow-inner ml-2 border border-gray-100">
-                <MiniMap route={route} apiKey={kakaoApiKey} />
-              </div>
-            </button>
-          ))
+             <button
+               key={route.id}
+               onClick={() => onSelectRoute(route)}
+               style={disableAnimation ? {} : {
+                 animation: `slideInFromBottom 0.2s ease-out forwards`,
+                 animationDelay: `${i * 0.08}s`,
+                 opacity: 0,
+               }}
+               // 💡 1. flex-col로 변경하여 위아래 레이아웃으로 나눔
+               className={`bg-white border-[1.5px] border-gray-100 rounded-[28px] p-6 text-left active:scale-[0.98] transition-transform shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-4 ${disableAnimation ? 'opacity-100' : ''}`}
+             >
+               {/* 💡 2. 상단 (Row 1): 순위 동그라미 + 경로 이름 (가로 공간을 넓게 씀) */}
+               <div className="flex items-center gap-3 w-full">
+                 <div className="w-12 h-12 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-black text-[22px] shrink-0 shadow-sm">
+                   {route.rank}
+                 </div>
+                 <p className="text-[24px] font-black text-gray-800 break-keep leading-tight flex-1">
+                   {route.name}
+                 </p>
+               </div>
+
+               {/* 💡 3. 하단 (Row 2): [거리, 시간] 정보 + 미니맵 */}
+               <div className="flex justify-between items-end w-full pl-1 mt-1">
+                 {/* 좌측: 세로로 나열된 거리와 시간 */}
+                 <div className="flex flex-col gap-2.5">
+                   <span className="flex items-center gap-2 text-[22px] text-gray-500 font-bold">
+                     📏 {route.distance}
+                   </span>
+                   <span className="flex items-center gap-2 text-[22px] text-gray-500 font-bold">
+                     ⏱ {route.duration}
+                   </span>
+                 </div>
+                 
+                 {/* 우측: 미니맵 */}
+                 <div className="w-[84px] h-[84px] bg-[#F5F7F5] rounded-2xl overflow-hidden shrink-0 shadow-inner border border-gray-100">
+                   <MiniMap route={route} apiKey={kakaoApiKey} />
+                 </div>
+               </div>
+             </button>
+           ))
         )}
+      </div>
+      {showBottomArrow && (
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center z-20 pointer-events-none">
+          <div className="bg-[#3B82F6]/90 rounded-full p-2 shadow-md animate-bounce">
+            <ChevronDown size={32} color="white" />
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
