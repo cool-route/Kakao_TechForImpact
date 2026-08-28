@@ -51,12 +51,14 @@ def _build_local_preset_response(text: str) -> dict:
     label_to_id: dict[str, str] = {}
     alias_to_id: dict[str, str] = {}
     category_to_ids: dict[str, list[str]] = {}
+    id_to_label: dict[str, str] = {}
 
     for category_name, items in catalog.get("categories", {}).items():
         category_to_ids.setdefault(category_name, [])
         for item in items:
             preset_id = item["id"]
             label_to_id[item["label"]] = preset_id
+            id_to_label[preset_id] = item.get("label", preset_id)
             for alias in item.get("aliases", []):
                 alias_to_id[alias] = preset_id
             category_to_ids[category_name].append(preset_id)
@@ -118,16 +120,20 @@ def _build_local_preset_response(text: str) -> dict:
 
     # Keep results within the catalog limits.
     return {
-        "base_presets": base_presets[:3],
-        "sub_presets": sub_presets[:2],
+        "base_presets": [{"id": pid, "label": id_to_label.get(pid, pid)} for pid in base_presets[:3]],
+        "sub_presets": [{"id": pid, "label": id_to_label.get(pid, pid)} for pid in sub_presets[:2]],
     }
+
+class PresetItem(BaseModel):
+    id: str
+    label: str
 
 class ConfirmedTextRequest(BaseModel):
     text: str
 
 class PresetResponse(BaseModel):
-    base_presets: List[str] = Field(default_factory=list)
-    sub_presets: List[str] = Field(default_factory=list)
+    base_presets: List[PresetItem] = Field(default_factory=list)
+    sub_presets: List[PresetItem] = Field(default_factory=list)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -188,10 +194,9 @@ async def local_server(request: dict):
             "base_presets": ["base1", "base2"],
             "sub_presets": ["sub1", "sub2"],
         }
-
     return _build_local_preset_response(text)
 
-# 해당 함수는 실제 백서버 주소를 기입한 후에 /api/routes.py에 옮길 예정
+
 @app.post("/preset", response_model=PresetResponse)
 async def extract_presets(request: ConfirmedTextRequest):
     user_text = request.text
@@ -215,10 +220,13 @@ async def extract_presets(request: ConfirmedTextRequest):
             response.raise_for_status() 
             preset_data = response.json()
 
+        preset_data = _build_local_preset_response(user_text)
+
         base_list = preset_data.get("base_presets") or []
         sub_list = preset_data.get("sub_presets") or []
 
-        base_list = base_list[:2] 
+        base_list = base_list[:2]
+        # sub_list = sub_list[:3]
 
         print(f"[preset] text:", request.text)
         print(f"[preset] base_presets: {base_list} / sub_presets: {sub_list}\n")
@@ -234,15 +242,6 @@ async def extract_presets(request: ConfirmedTextRequest):
     except Exception as e:
         print(f"내부 에러: {e}")
         raise HTTPException(status_code=500, detail="데이터를 처리하는 중 오류가 발생했습니다.")
-    
-    # 더미
-    # dummy_base_presets = ["시민한길", "30분", "반려동물"]
-    # dummy_sub_presets = ["그늘", "살리라산", "청지"]
-    
-    # return PresetResponse(
-    #     base_presets=dummy_base_presets,
-    #     sub_presets=dummy_sub_presets
-    # )
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
 # app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")
