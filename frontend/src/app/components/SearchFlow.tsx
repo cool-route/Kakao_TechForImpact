@@ -110,11 +110,9 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   const handleManualWrite = () => {
     setIsEditing(true);
     isEditingRef.current = true;
-
-    if (sttStatus === 'error') {
+    if (sttStatus === 'error' || recognizedText === "텍스트로 변환하고 있어요...") {
       setRecognizedText(""); 
-    }
-    
+    } 
     setSttStatus('success');
     setTimeout(() => {
       textareaRef.current?.focus();
@@ -228,11 +226,11 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       {step === 'start' && (
         <div className="flex-1 w-full px-6 flex flex-col pt-16 pb-12 animate-pop-in">
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-8">
-            오늘은 어떤 시원한 길을<br/>걸을까요?
+            오늘은 어떤 시원한 길을 걸을까요?
           </h2>
           <div className="bg-[#EBF5FF] p-10 rounded-[32px] text-center mb-8 shadow-sm">
             <p className="text-[#1E40AF] font-bold text-[22px] leading-relaxed">
-              음성으로<br/>원하는 산책 조건을<br/>말해주세요
+              음성으로 원하는<br/>산책 조건을 말해주세요
             </p>
           </div>
           <button onClick={handleStartVoice} className="w-full bg-[#3B82F6] text-white py-6 rounded-2xl font-bold text-[24px] shadow-md active:bg-blue-600 transition-colors mb-10">
@@ -240,11 +238,11 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
           </button>
           
           <div className="flex flex-col gap-4 mt-auto">
-            <div className="bg-[#F0F7FF] text-[#1E3A8A] px-6 py-5 rounded-2xl text-[16px] font-bold shadow-sm break-keep leading-relaxed text-center">
+            <div className="bg-[#F0F7FF] text-[#1E3A8A] px-6 py-5 rounded-2xl text-[20px] font-bold shadow-sm break-keep leading-relaxed text-center">
               "반려견이랑 한낮에 산책하려는데 발바닥이 걱정돼"
             </div>
-            <div className="bg-[#F0F7FF] text-[#1E3A8A] px-6 py-5 rounded-2xl text-[16px] font-bold shadow-sm break-keep leading-relaxed text-center">
-              "할머니랑 짧게 경치 좋은 곳을 걷고 싶어"
+            <div className="bg-[#F0F7FF] text-[#1E3A8A] px-6 py-5 rounded-2xl text-[20px] font-bold shadow-sm break-keep leading-relaxed text-center">
+              "할머니랑 짧게 경치 좋은 곳을<br/>걷고 싶어"
             </div>
           </div>
         </div>
@@ -254,7 +252,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       {step === 'voice_input' && (
         <div className="flex-1 w-full px-6 flex flex-col items-center pt-10 pb-8 animate-pop-in">
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-10">
-            오늘은 어떤 시원한 길을<br/>걸을까요?
+            오늘은 어떤 시원한 길을 걸을까요?
           </h2>
           <div className="relative flex items-center justify-center w-40 h-40 mb-8 mt-4">
             <div className="absolute inset-0 bg-[#3B82F6] rounded-full opacity-10 animate-ping"></div>
@@ -302,7 +300,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
             </button>
           </div>
           <h2 className="text-[34px] font-black text-gray-800 text-center leading-snug mb-12">
-            오늘은 어떤 시원한 길을<br/>걸을까요?
+            오늘은 어떤 시원한 길을 걸을까요?
           </h2>
 
           {/* 1. 상태에 따른 아이콘 분기 처리 */}
@@ -332,7 +330,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
                 onChange={(e) => setRecognizedText(e.target.value)}
                 disabled={sttStatus === 'processing' || sttStatus === 'error'}
                 readOnly={!isEditing}
-                className={`w-full text-[24px] font-black leading-relaxed text-center break-keep bg-transparent resize-none focus:outline-none ${
+                className={`w-full text-[32px] font-black leading-relaxed text-center break-keep bg-transparent resize-none focus:outline-none ${
                   sttStatus === 'error' ? 'text-[#991B1B]' : 'text-[#1E3A8A]'
                 }`}
                 rows={3}
@@ -350,20 +348,24 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
               </button>
             </div>
           ) : (
-            <div className="mb-auto" /> /* 💡 박스 완전히 삭제 후 버튼 여백 유지를 위해 빈 div만 남김 */
+            <div className="mb-auto" />
           )}
 
           <div className="flex gap-4 w-full mt-6">
             <button 
               onClick={handleManualWrite} 
-              className="flex-1 bg-[#F0F7FF] text-[#3B82F6] py-6 rounded-2xl font-bold text-[22px] active:scale-95 transition-transform shadow-sm"
+              className={`flex-1 py-6 rounded-2xl font-black text-[26px] shadow-sm active:scale-95 transition-all ${
+                isEditing 
+                  ? 'bg-[#1E88E5] text-white ring-4 ring-[#8BB4F6]' 
+                  : 'bg-[#F0F7FF] text-[#3B82F6]'
+              }`}
             >
-              직접 쓰기
+              {isEditing ? '입력 중...' : '직접 쓰기'}
             </button>
             <button 
               onClick={handleConfirmVoice} 
               disabled={sttStatus === 'processing' || sttStatus === 'error'}
-              className={`flex-1 py-6 rounded-2xl font-bold text-[22px] shadow-md transition-all duration-300 ${
+              className={`flex-1 py-6 rounded-2xl font-black text-[26px] shadow-md transition-all duration-300 ${
                 (sttStatus === 'processing' || sttStatus === 'error') 
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                   : 'bg-[#3B82F6] text-white active:scale-95'
