@@ -66,6 +66,7 @@ export function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: Ro
 
         features.forEach((feature: any) => {
           const heatScore = feature.properties?.heat_score ?? 22;
+          const strokeColor = heatScoreToColor(heatScore);
           const path = feature.geometry.coordinates.map(([x, y]: [number, number]) => {
             const [convertedLng, convertedLat] = proj4('EPSG:5186', 'EPSG:4326', [x, y]);
             const latlng = new window.kakao.maps.LatLng(convertedLat, convertedLng);
@@ -74,7 +75,11 @@ export function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: Ro
           });
 
           const polyline = new window.kakao.maps.Polyline({
-            path, strokeWeight: 7, strokeColor: heatScoreToColor(heatScore), strokeOpacity: 0.9, strokeStyle: 'solid',
+            path, 
+            strokeWeight: 7, 
+            strokeColor: heatScoreToColor(heatScore), 
+            strokeOpacity: 0.9, 
+            strokeStyle: 'solid',
           });
           polyline.setMap(map);
           overlaysRef.current.push(polyline);

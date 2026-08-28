@@ -1,6 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import proj4 from 'proj4';
 import type { RouteInfo } from '../App';
+
+proj4.defs(
+  'EPSG:5186',
+  '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs'
+);
+
+function heatScoreToColor(heatScore: number): string {
+  if (heatScore < 20) return '#4A90D9';
+  if (heatScore < 22) return '#5DB87C';
+  if (heatScore < 24) return '#F5A623';
+  return '#E74C3C';
+}
 
 interface RouteResultScreenProps {
   selectedTags: string[];
@@ -9,9 +22,103 @@ interface RouteResultScreenProps {
   disableAnimation?: boolean;
 }
 
+function MiniMap({ route, apiKey }: { route: RouteInfo; apiKey: string }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!apiKey) return;
+
+    const initThumbnailMap = () => {
+      if (!mapRef.current || !window.kakao?.maps?.load) return;
+
+      window.kakao.maps.load(() => {
+        const mapOption = {
+          center: new window.kakao.maps.LatLng(37.32, 127.12),
+          level: 5,
+          draggable: false,        // 드래그 금지
+          scrollwheel: false,      // 휠 줌 금지
+          disableDoubleClick: true,
+          disableDoubleClickZoom: true,
+          keyboardShortcuts: false,
+        };
+        
+        const map = new window.kakao.maps.Map(mapRef.current!, mapOption);
+        const bounds = new window.kakao.maps.LatLngBounds();
+
+        const geojson = typeof route.geojson === 'string' ? JSON.parse(route.geojson) : (route.geojson || {});
+        const features = geojson.features || [];
+
+        // ⚠️ API 에러로 Mock 데이터(geojson: null)가 들어오면 선을 그리지 않고 종료
+        if (features.length === 0) return;
+
+        features.forEach((feature: any) => {
+          const heatScore = feature.properties?.heat_score ?? 22;
+          const strokeColor = heatScoreToColor(heatScore);
+          
+          const path = feature.geometry.coordinates.map(([x, y]: [number, number]) => {
+            let lng = x, lat = y;
+            if (x > 1000) { 
+              [lng, lat] = proj4('EPSG:5186', 'EPSG:4326', [x, y]);
+            }
+            const latlng = new window.kakao.maps.LatLng(lat, lng);
+            bounds.extend(latlng);
+            return latlng;
+          });
+
+          const polyline = new window.kakao.maps.Polyline({
+            path, 
+            strokeWeight: 4,
+            strokeColor: strokeColor,
+            strokeOpacity: 0.9, 
+            strokeStyle: 'solid',
+          });
+          polyline.setMap(map);
+        });
+
+        // 경로가 있을 때만 지도의 중심과 확대 축소를 경로에 맞춤
+        if (!bounds.isEmpty()) {
+          map.setBounds(bounds, 16, 16, 16, 16); 
+        }
+      });
+    };
+
+    // ========================================================
+    // 💡 카카오맵 SDK 스크립트 안전 주입 로직 (핵심 수정 사항)
+    // ========================================================
+    const scriptId = 'kakao-map-script';
+    let script = document.getElementById(scriptId) as HTMLScriptElement;
+
+    // 문서에 스크립트가 없다면 동적으로 생성해서 헤더에 추가
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false&libraries=services`;
+      document.head.appendChild(script);
+    }
+
+    // 이미 로드가 완료된 상태인지 확인 후 실행, 아니면 load 이벤트 대기
+    if (window.kakao && window.kakao.maps) {
+      initThumbnailMap();
+    } else {
+      script.addEventListener('load', initThumbnailMap);
+    }
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 정리
+    return () => {
+      if (script) {
+        script.removeEventListener('load', initThumbnailMap);
+      }
+    };
+  }, [route, apiKey]);
+
+  // pointer-events-none: 터치 스크롤 시 지도에 걸리는 현상 방지
+  return <div ref={mapRef} className="w-full h-full pointer-events-none" />;
+}
+
 export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute, disableAnimation }: RouteResultScreenProps) {
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const kakaoApiKey = (import.meta as any).env?.VITE_KAKAO_MAPS_API_KEY ?? '';
 
   const apiItemToRouteInfo = (item: any, index: number): RouteInfo => {
     const features = item.geojson?.features ?? [];
@@ -37,35 +144,8 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
     };
   };
 
-  // =====================================================================
-  // [기능 추가 예정] 3. 알고리즘 기반 경로 추천 (POST /recommend)
-  // 확정된 프리셋 배열을 백엔드로 전송하여 Top 3 경로를 반환받습니다.
-  // =====================================================================
-  /*
-  const fetchRecommendedRoutes = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/recommend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tags: selectedTags })
-      });
-      const data = await res.json();
-      
-      // Top 3 경로만 가져옵니다.
-      setRoutes(data.slice(0, 3).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
-    } catch (err) {
-      console.error("추천 경로 로드 실패", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  */
-
   useEffect(() => {
     const fetchRoutes = async () => {
-      // fetchRecommendedRoutes(); // API 연동 시 주석 해제 후 아래 기존 로직 삭제
-
       // 임시 Mock 로직 (기존 기능 유지)
       setIsLoading(true);
       try {
@@ -148,6 +228,9 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
                   <span className="flex items-center gap-1.5">📏 {route.distance}</span>
                   <span className="flex items-center gap-1.5">⏱ {route.duration}</span>
                 </div>
+              </div>
+              <div className="w-[84px] h-[84px] bg-[#F5F7F5] rounded-2xl overflow-hidden shrink-0 shadow-inner ml-2 border border-gray-100">
+                <MiniMap route={route} apiKey={kakaoApiKey} />
               </div>
             </button>
           ))
