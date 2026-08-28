@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, MapPin, Thermometer, Sun, TreePine, Wind } from 'lucide-react';
+import proj4 from 'proj4';
 import type { RouteInfo } from '../App';
 
 declare global {
@@ -16,6 +17,11 @@ declare global {
     };
   }
 }
+
+proj4.defs(
+  'EPSG:5186',
+  '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs'
+);
 
 function heatScoreToColor(heatScore: number): string {
   if (heatScore < 20) return '#4A90D9'; 
@@ -38,10 +44,15 @@ export function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: Ro
     const existingScript = document.querySelector(`script[src*="dapi.kakao.com"]`);
 
     function initMap() {
+      console.log("[디버깅] route.start:", route.start, typeof route.start[0]);
+      console.log("[디버깅] geojson features:", route.geojson?.features?.[0]?.geometry?.coordinates?.[0]);
+      console.log("[디버깅] shelters:", route.shelters);
+      
       if (!mapRef.current || !window.kakao || !window.kakao.maps || !window.kakao.maps.load) return;
 
       window.kakao.maps.load(() => {
-        const initialCenter = new window.kakao.maps.LatLng(route.start[0], route.start[1]);
+        const [startLng, startLat] = proj4('EPSG:5186', 'EPSG:4326', [route.start[1], route.start[0]]);
+        const initialCenter = new window.kakao.maps.LatLng(startLat, startLng);
         const map = new window.kakao.maps.Map(mapRef.current!, { center: initialCenter, level: 5 });
         mapInstanceRef.current = map;
 
@@ -51,17 +62,24 @@ export function KakaoMapComponent({ apiKey, route }: { apiKey: string; route: Ro
 
         const geojson = typeof route.geojson === 'string' ? JSON.parse(route.geojson) : route.geojson;
         const features = geojson?.features || [];
+        
 
         features.forEach((feature: any) => {
           const heatScore = feature.properties?.heat_score ?? 22;
-          const path = feature.geometry.coordinates.map(([lng, lat]: [number, number]) => {
-            const latlng = new window.kakao.maps.LatLng(lat, lng);
+          const strokeColor = heatScoreToColor(heatScore);
+          const path = feature.geometry.coordinates.map(([x, y]: [number, number]) => {
+            const [convertedLng, convertedLat] = proj4('EPSG:5186', 'EPSG:4326', [x, y]);
+            const latlng = new window.kakao.maps.LatLng(convertedLat, convertedLng);
             bounds.extend(latlng);
             return latlng;
           });
 
           const polyline = new window.kakao.maps.Polyline({
-            path, strokeWeight: 7, strokeColor: heatScoreToColor(heatScore), strokeOpacity: 0.9, strokeStyle: 'solid',
+            path, 
+            strokeWeight: 7, 
+            strokeColor: heatScoreToColor(heatScore), 
+            strokeOpacity: 0.9, 
+            strokeStyle: 'solid',
           });
           polyline.setMap(map);
           overlaysRef.current.push(polyline);

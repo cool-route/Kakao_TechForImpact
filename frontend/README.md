@@ -30,6 +30,21 @@ The intended flow is:
 
 ## 🚀 Running the code (설치 및 실행 방법)
 
+## 📦 새롭게 추가된 의존성 (Dependencies)
+* `proj4`: 공공 기후/안전 데이터의 TM 좌표계(EPSG:5186)를 카카오맵이 인식할 수 있는 WGS84(위경도, EPSG:4326)로 변환하기 위해 사용됩니다.
+
+## 🗺️ 지도 및 좌표계 안내 (Map & Coordinates)
+* **좌표계 자동 변환:** 
+  백엔드에서 내려주는 GeoJSON 데이터의 좌표가 `1000` 이상인 경우, 프론트엔드(`proj4`)에서 이를 **EPSG:5186 (TM 중부원점)**으로 간주하고 자동으로 위경도로 변환하여 카카오맵에 렌더링합니다.
+* **열 지수(Heat Score) 시각화:** 
+  지도에 표시되는 경로의 색상은 구간별 `heat_score`를 기준으로 결정됩니다.
+  * 파랑 (#4A90D9): 20 미만 (매우 안전)
+  * 초록 (#5DB87C): 20 ~ 22 미만 (안전)
+  * 주황 (#F5A623): 22 ~ 24 미만 (주의)
+  * 빨강 (#E74C3C): 24 이상 (위험)
+* **미니맵 로드 방식 개선:**
+  리스트 화면(`RouteResultScreen`) 렌더링 시 카카오맵 SDK를 동적으로 `<head>`에 주입(`script.src`)하여 비동기 환경에서도 지도가 안정적으로 노출되도록 개선했습니다.
+
 ### 1. Install Dependencies
 Run `npm i` to install the dependencies.
 

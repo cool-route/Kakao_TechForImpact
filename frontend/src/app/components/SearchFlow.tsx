@@ -15,7 +15,7 @@ interface SearchFlowProps {
 }
 
 export default function SearchFlow({ step, setStep, recognizedText, setRecognizedText, setSelectedTags, activeTags, setActiveTags, inactiveTags, setInactiveTags }: SearchFlowProps) {
-  const [tagError, setTagError] = useState(false);
+  const [tagError, setTagError] = useState("");
   const voiceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tagErrorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sttStatus, setSttStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -150,7 +150,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
     setActiveTags(basePresets);
     setInactiveTags(subPresets);
     setStep('preset');
-    setTagError(false);
+    setTagError("");
 
   } catch (err) {
     console.error("프리셋 추출 실패", err);
@@ -167,15 +167,24 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   };
 
   const handleSearchRoutes = () => {
-   if (activeTags.length > 3) {
-      setTagError(true);
+   if (activeTags.length === 0) {
+      setTagError("태그를 1개 이상 선택해주세요!");
       if (tagErrorTimeout.current) clearTimeout(tagErrorTimeout.current);
       tagErrorTimeout.current = setTimeout(() => {
-        setTagError(false);
+        setTagError("");
       }, 3000);
       return;
     }
-    setTagError(false);
+    
+   if (activeTags.length > 3) {
+      setTagError("태그는 3개까지 선택해주세요!");
+      if (tagErrorTimeout.current) clearTimeout(tagErrorTimeout.current);
+      tagErrorTimeout.current = setTimeout(() => {
+        setTagError("");
+      }, 3000);
+      return;
+    }
+    setTagError("");
     setStep('searching');
     setSelectedTags(activeTags.map(t => t.label));
     setTimeout(() => setStep('route_list'), 2000);
@@ -434,8 +443,8 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
           </div>
 
           <div className="absolute bottom-8 left-6 right-6 flex flex-col z-30 pointer-events-none">
-             <div className={`mb-3 text-center text-[#E74C3C] font-bold text-[18px] bg-[#FCECEC]/95 backdrop-blur-sm py-4 px-5 rounded-2xl border border-[#F5B7B1] transition-all duration-300 ${tagError ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              태그는 총 3개까지 선택해주세요!
+             <div className={`mb-3 text-center text-[#E74C3C] font-bold text-[18px] bg-[#FCECEC]/95 backdrop-blur-sm py-4 px-5 rounded-2xl border border-[#F5B7B1] transition-all duration-300 ${tagError !== "" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              {tagError}
             </div>
             
             <button onClick={handleSearchRoutes} className="w-full pointer-events-auto bg-[#0047AB] text-white py-6 rounded-2xl font-bold text-[24px] flex justify-center items-center gap-2 shadow-[0_10px_30px_rgba(0,71,171,0.3)] active:bg-[#003380] active:scale-[0.98] transition-transform">
