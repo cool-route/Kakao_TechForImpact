@@ -25,6 +25,9 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   const audioChunks = useRef<Blob[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isEditingRef = useRef(false);
+  const silenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const startRealSTT = async () => {
     try {
@@ -35,16 +38,32 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       setIsEditing(false);
       isEditingRef.current = false;
 
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioContext();
+      audioContextRef.current = audioCtx;
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
       mediaRecorder.current.ondataavailable = (e) => { 
         if (e.data.size > 0) audioChunks.current.push(e.data); 
       };
 
       mediaRecorder.current.onstop = async () => {
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+          audioContextRef.current.close();
+        }
+
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append("audio", audioBlob, "audio.webm");
 
-        // 5초가 지나 녹음이 끝나면 확인 화면으로 이동하여 '처리 중' 상태 설정
         setStep('voice_confirm');
         setSttStatus('processing');
         setRecognizedText("텍스트로 변환하고 있어요...");
@@ -79,11 +98,28 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
       mediaRecorder.current.start();
 
-      voiceTimeout.current = setTimeout(() => {
-        if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
-          mediaRecorder.current.stop();
+      const resetSilenceTimeout = () => {
+        if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+        // 3초 동안 이 함수가 다시 호출(목소리 감지)되지 않으면 녹음 중지!
+        silenceTimeoutRef.current = setTimeout(() => {
+          if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+            mediaRecorder.current.stop();
+          }
+        }, 3000); 
+      };
+
+      const detectSilence = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const maxVol = Math.max(...dataArray);
+        if (maxVol > 10) { // 목소리가 감지되면 타임아웃 초기화
+          resetSilenceTimeout();
         }
-      }, 5000);
+        if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+          animationFrameRef.current = requestAnimationFrame(detectSilence);
+        }
+      };
+      resetSilenceTimeout();
+      detectSilence();
 
     } catch (err) { 
       console.error("마이크 권한이 필요합니다.", err); 
@@ -274,7 +310,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
 
           <div className="bg-[#F0F7FF] p-8 rounded-[32px] text-center w-full mb-auto shadow-sm">
             <p className="text-gray-500 font-bold text-[16px] mb-3">듣고 있어요...</p>
-            <p className="text-[#1E40AF] font-bold text-[20px]">5초 후 자동으로 처리됩니다</p>
+            <p className="text-[#1E40AF] font-bold text-[20px]">원하는 내용을 말씀해주세요</p>
           </div>
           
           <button onClick={handleFinishInput} className="w-full bg-[#3B82F6] text-[#FFFFFF] py-6 rounded-2xl font-bold text-[22px] shadow-sm mt-4 active:scale-95 transition-transform">
