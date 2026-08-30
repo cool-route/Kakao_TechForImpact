@@ -7,7 +7,7 @@ interface SearchFlowProps {
   setStep: (step: Step) => void;
   recognizedText: string;
   setRecognizedText: (text: string) => void;
-  setSelectedTags: (tags: string[]) => void;
+  setSelectedTags: (tags: TagItem[]) => void;
   activeTags: TagItem[];
   setActiveTags: React.Dispatch<React.SetStateAction<TagItem[]>>;
   inactiveTags: TagItem[];
@@ -220,7 +220,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   //   }
     setTagError("");
     setStep('searching');
-    setSelectedTags(activeTags.map(t => t.label));
+    setSelectedTags(activeTags);
     setTimeout(() => setStep('route_list'), 2000);
   };
 

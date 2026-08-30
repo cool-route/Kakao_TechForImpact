@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import proj4 from 'proj4';
-import type { RouteInfo } from '../App';
+import type { RouteInfo, TagItem } from '../App';
 
 proj4.defs(
   'EPSG:5186',
@@ -16,7 +16,7 @@ function heatScoreToColor(heatScore: number): string {
 }
 
 interface RouteResultScreenProps {
-  selectedTags: string[];
+  selectedTags: TagItem[];
   onBack: () => void;
   onSelectRoute: (route: RouteInfo) => void;
   disableAnimation?: boolean;
@@ -171,18 +171,29 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
 
   useEffect(() => {
     const fetchRoutes = async () => {
-      // 임시 Mock 로직 (기존 기능 유지)
       setIsLoading(true);
       try {
-        const res = await fetch('/routes');
+       const queryParams = selectedTags.length > 0 
+          ? '?' + selectedTags.map(tag => `presets=${encodeURIComponent(tag.id)}`).join('&')
+          : '';
+        
+        const res = await fetch(`http://localhost:8000/routes${queryParams}`);
+        
         if (res.ok) {
           const data = await res.json();
           setRoutes(data.slice(0, 3).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
         } else {
+          const mockGeoJson = {
+            type: "FeatureCollection",
+            features: [{
+              properties: { heat_score: 18 },
+              geometry: { type: "LineString", coordinates: [[127.0972, 37.3219], [127.0982, 37.3225]] }
+            }]
+          };
           setRoutes([
-            { id: 1, rank: 1, name: "시민한길 A코스", distance: "2.1km", duration: "30분", tags: ["시민한길", "30분", "반려동물"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3B82F6" },
-            { id: 2, rank: 2, name: "시민한길 B코스", distance: "3.1km", duration: "38분", tags: ["시민한길", "38분"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3B82F6" },
-            { id: 3, rank: 3, name: "올림픽공원 산책로", distance: "2.8km", duration: "35분", tags: ["올림픽공원"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3B82F6" },
+            { id: 1, rank: 1, name: "course 1", distance: "-km", duration: "-분", tags: ["p1", "p2", "p3"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3B82F6" },
+            { id: 2, rank: 2, name: "course 2", distance: "-km", duration: "-분", tags: ["p1", "p2"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3B82F6" },
+            { id: 3, rank: 3, name: "course 3", distance: "-km", duration: "-분", tags: ["p1", "p2", "p3"], start: [37.5, 127.0], end: [37.51, 127.01], geojson: null, shelters: [], rankColor: "#3B82F6" },
           ]);
         }
       } catch (err) {
@@ -223,7 +234,7 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
         {selectedTags.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2.5 font-bold text-gray-700 text-[16px]">
             {selectedTags.map((tag, idx) => (
-              <span key={idx}>#{tag}</span>
+              <span key={idx}>#{tag.label}</span>
             ))}
           </div>
         )}
