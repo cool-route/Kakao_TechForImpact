@@ -9,7 +9,6 @@ node_modules/
 # Backup files
 *.bak
 
-echo ".env" >> .gitignore
 data/raw/
 # 디폴트 무시된 파일
 /shelf/
@@ -30,3 +29,5 @@ data_preprocessing/
 
 scripts/
 visualize_map/
+
+echo "**/.env" >> .gitignore

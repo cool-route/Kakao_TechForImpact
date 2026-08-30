@@ -210,14 +210,14 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       return;
     }
     
-   if (activeTags.length > 3) {
-      setTagError("태그는 3개까지 선택해주세요!");
-      if (tagErrorTimeout.current) clearTimeout(tagErrorTimeout.current);
-      tagErrorTimeout.current = setTimeout(() => {
-        setTagError("");
-      }, 3000);
-      return;
-    }
+  //  if (activeTags.length > 3) {
+  //     setTagError("태그는 3개까지 선택해주세요!");
+  //     if (tagErrorTimeout.current) clearTimeout(tagErrorTimeout.current);
+  //     tagErrorTimeout.current = setTimeout(() => {
+  //       setTagError("");
+  //     }, 3000);
+  //     return;
+  //   }
     setTagError("");
     setStep('searching');
     setSelectedTags(activeTags.map(t => t.label));
