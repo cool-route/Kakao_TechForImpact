@@ -1,8 +1,5 @@
 # manual_test_agent.py
 import asyncio
-import os
-
-os.environ["CLIMATEPOD_AGENT_KEY"] = "EIJFWFNAALAeeyT11"  # 테스트용, 커밋 금지
 
 from agent_client import call_preset_agent
 

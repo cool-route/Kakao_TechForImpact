@@ -1,4 +1,8 @@
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
 import networkx as nx
 from fastapi import APIRouter, HTTPException, Query
 
@@ -100,18 +104,21 @@ def list_top_routes(tags: list[str] | None = Query(default=None, description="�
 async def receive_preset_text(request: PresetExtractionRequest) -> dict:
     try:
         agent_text = await call_preset_agent(request.text)
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=502, detail="클라이밋팟 에이전트 호출 실패") from exc
-    except httpx.TimeoutException as exc:
-        raise HTTPException(status_code=504, detail="클라이밋팟 에이전트 응답 시간 초과") from exc
+    except Exception as exc:
+        if httpx and isinstance(exc, httpx.HTTPStatusError):
+            raise HTTPException(status_code=502, detail="클라이밋팟 에이전트 호출 실패") from exc
+        if httpx and isinstance(exc, httpx.TimeoutException):
+            raise HTTPException(status_code=504, detail="클라이밋팟 에이전트 응답 시간 초과") from exc
+        raise HTTPException(status_code=502, detail=f"클라이밋팟 에이전트 호출 오류: {exc}") from exc
 
     preset_ids, dropped_ids = extract_preset_ids(agent_text)
     base_presets, sub_presets = classify_presets(preset_ids)
+    selected_preset_ids = [item["id"] for item in base_presets + sub_presets]
 
-    routes = select_top_k_routes(preferred_tags=preset_ids, k=3, mode=None)
+    routes = select_top_k_routes(preferred_tags=selected_preset_ids, k=3, mode=None)
 
     return {
-        "preset_ids": preset_ids,
+        "preset_ids": selected_preset_ids,
         "base_presets": base_presets,
         "sub_presets": sub_presets,
         "dropped_ids": dropped_ids,

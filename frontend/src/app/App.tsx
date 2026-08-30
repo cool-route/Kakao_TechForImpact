@@ -31,7 +31,7 @@ export default function App() {
   }, [currentStep]);
   
   const [recognizedText, setRecognizedText] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
 
   const [activeTags, setActiveTags] = useState<TagItem[]>([]);
   const [inactiveTags, setInactiveTags] = useState<TagItem[]>([]);

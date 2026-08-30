@@ -7,7 +7,7 @@ interface SearchFlowProps {
   setStep: (step: Step) => void;
   recognizedText: string;
   setRecognizedText: (text: string) => void;
-  setSelectedTags: (tags: string[]) => void;
+  setSelectedTags: (tags: TagItem[]) => void;
   activeTags: TagItem[];
   setActiveTags: React.Dispatch<React.SetStateAction<TagItem[]>>;
   inactiveTags: TagItem[];
@@ -50,7 +50,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
         setRecognizedText("텍스트로 변환하고 있어요...");
 
         try {
-          const res = await fetch('http://localhost:8000/speech', { 
+          const res = await fetch('/speech', {
             method: 'POST', 
             body: formData 
           });
@@ -123,7 +123,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   try {
     setAnalyzeError(false);
 
-    const res = await fetch('http://localhost:8000/preset', {
+    const res = await fetch('/preset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: recognizedText })
@@ -145,8 +145,8 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
       originalType: 'recommended' as const,
     }));
 
-    setActiveTags(basePresets);
-    setInactiveTags(subPresets);
+    setActiveTags(basePresets.slice(0, 3));
+    setInactiveTags(subPresets.slice(0, 2));
     setStep('preset');
     setTagError("");
 
@@ -184,7 +184,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
     }
     setTagError("");
     setStep('searching');
-    setSelectedTags(activeTags.map(t => t.label));
+    setSelectedTags(activeTags);
     setTimeout(() => setStep('route_list'), 2000);
   };
 

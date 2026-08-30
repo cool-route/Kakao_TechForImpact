@@ -36,13 +36,14 @@ export default defineConfig({
 
   server: {
     proxy: {
-      '/nearest-route': 'http://localhost:8000',
-      '/routes': 'http://localhost:8000',
-      '/shelters': 'http://localhost:8000',
-      '/route': 'http://localhost:8000',
-      '/preset': 'http://localhost:8000',
-      '/health': 'http://localhost:8000',
-      '/healthcheck': 'http://127.0.0.1:8000',
+      '/nearest-route': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/routes': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/shelters': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/route': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/preset': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/speech': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/health': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/healthcheck': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },
 })

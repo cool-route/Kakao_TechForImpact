@@ -30,6 +30,10 @@ _CATEGORY_OF = {
     for item in items
 }
 
+_SELECTION_RULES = _CATALOG.get("selection_rules", {})
+_MAX_BASE_PRESETS = int(_SELECTION_RULES.get("max_base_presets", 3))
+_MAX_SUB_PRESETS = int(_SELECTION_RULES.get("max_sub_presets", 2))
+
 # base로 보여줄 카테고리: 소요 시간 / 장소 / 대상. 나머지(환경/더위 대응)는 sub
 _BASE_CATEGORIES = {"duration", "place", "condition"}
 
@@ -61,7 +65,11 @@ def classify_presets(preset_ids: list[str]) -> tuple[list[dict], list[dict]]:
     sub: 환경, 더위 대응
     """
     base, sub = [], []
+    seen = set()
     for pid in preset_ids:
+        if pid in seen:
+            continue
+        seen.add(pid)
         if pid not in _LABELS:
             continue
         item = {"id": pid, "label": _LABELS[pid]}
@@ -70,4 +78,4 @@ def classify_presets(preset_ids: list[str]) -> tuple[list[dict], list[dict]]:
             base.append(item)
         else:
             sub.append(item)
-    return base, sub
+    return base[:_MAX_BASE_PRESETS], sub[:_MAX_SUB_PRESETS]

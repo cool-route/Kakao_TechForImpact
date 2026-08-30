@@ -1,12 +1,22 @@
 import json
 import os
-import httpx
+from pathlib import Path
+
+from dotenv import load_dotenv
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 AGENT_URL = "https://climatepod-agent-snowy.vercel.app/chat"
 AGENT_API_KEY = os.environ.get("CLIMATEPOD_AGENT_KEY")  # 없으면 인증 없이 호출
 
 
 async def call_preset_agent(message: str, conversation_id: str | None = None) -> str:
+    if httpx is None:
+        raise RuntimeError("httpx 라이브러리가 설치되어 있지 않습니다.")
     headers = {"Content-Type": "application/json"}
     if AGENT_API_KEY:
         headers["x-api-key"] = AGENT_API_KEY  # Bearer 접두사 없이 값 그대로

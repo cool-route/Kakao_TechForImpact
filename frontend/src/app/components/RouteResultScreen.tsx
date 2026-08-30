@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import proj4 from 'proj4';
-import type { RouteInfo } from '../App';
+import type { RouteInfo, TagItem } from '../App';
 
 proj4.defs(
   'EPSG:5186',
@@ -16,7 +16,7 @@ function heatScoreToColor(heatScore: number): string {
 }
 
 interface RouteResultScreenProps {
-  selectedTags: string[];
+  selectedTags: TagItem[];
   onBack: () => void;
   onSelectRoute: (route: RouteInfo) => void;
   disableAnimation?: boolean;
@@ -174,7 +174,14 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
       // 임시 Mock 로직 (기존 기능 유지)
       setIsLoading(true);
       try {
-        const res = await fetch('/routes');
+        const params = new URLSearchParams();
+        selectedTags.forEach((tag) => params.append('tags', tag.id));
+
+        const endpoint = selectedTags.length > 0
+          ? `/routes/top?${params.toString()}`
+          : '/routes';
+
+        const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
           setRoutes(data.slice(0, 3).map((item: any, i: number) => apiItemToRouteInfo(item, i)));
@@ -222,8 +229,8 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
         <p className="text-[22px] font-black text-[#3B82F6] mb-4">경로 추천이 완료되었어요!</p>
         {selectedTags.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2.5 font-bold text-gray-700 text-[16px]">
-            {selectedTags.map((tag, idx) => (
-              <span key={idx}>#{tag}</span>
+            {selectedTags.map((tag) => (
+              <span key={tag.id}>#{tag.label}</span>
             ))}
           </div>
         )}

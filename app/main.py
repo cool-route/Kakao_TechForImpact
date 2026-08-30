@@ -25,9 +25,27 @@ except ImportError:  # pragma: no cover - optional dependency for local preset p
     httpx = None
 
 try:
-    import multipart  # type: ignore
-except ImportError:  # pragma: no cover - optional dependency for speech upload only
-    multipart = None
+    import python_multipart as multipart
+except ImportError:
+    try:
+        import multipart  # type: ignore
+    except ImportError:
+        multipart = None
+
+try:
+    import imageio_ffmpeg
+    _ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    _ffmpeg_dir = os.path.dirname(_ffmpeg_exe)
+    _ffmpeg_symlink = os.path.join(_ffmpeg_dir, "ffmpeg")
+    if not os.path.exists(_ffmpeg_symlink):
+        try:
+            os.symlink(_ffmpeg_exe, _ffmpeg_symlink)
+        except OSError:
+            pass
+    if _ffmpeg_dir not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = f"{_ffmpeg_dir}:{os.environ.get('PATH', '')}"
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
@@ -177,13 +195,14 @@ if multipart is not None:
 
         try:
             # 2. 로컬 Whisper 모델로 추론
-            result = model.transcribe(temp_file_path, language="ko")
-            return {"text": result["text"]}
+            result = model.transcribe(temp_file_path, language="ko", fp16=False)
+            return {"text": result.get("text", "").strip()}
         except Exception as e:
             return {"error": str(e)}
         finally:
             # 3. 임시 파일 삭제
-            os.remove(temp_file_path)
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
 # 로컬 임시 서버
 @app.post("/localServer")
