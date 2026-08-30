@@ -218,7 +218,6 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   //     }, 3000);
   //     return;
   //   }
-  
     setTagError("");
     setStep('searching');
     setSelectedTags(activeTags.map(t => t.label));

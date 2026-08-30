@@ -18,7 +18,7 @@ from app.services.route_service import (
 
 router = APIRouter(tags=["routes"])
 
-
+# 출발 -> 목적 일직선 (사용 지양)
 @router.post(
     "/route",
     summary="시원한 경로 계산",
@@ -26,12 +26,15 @@ router = APIRouter(tags=["routes"])
     response_model=RouteResponse,
 )
 def create_route(request: RouteRequest) -> dict:
+    print(f"[route] 출발: {request.start} -> 도착: {request.end}\n모드: {request.mode}\n", flush=True)
     try:
-        return shortest_cool_route(
+        route_result = shortest_cool_route(
             mode=request.mode,
             start=request.start,
             end=request.end,
         )
+        print(f"[route] 거리: {route_result.get('distance_m')}m\n", flush=True)
+        return route_result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except nx.NetworkXNoPath as exc:
@@ -47,8 +50,8 @@ def create_route(request: RouteRequest) -> dict:
     response_model=list[ShelterResponse],
 )
 def list_shelters() -> list[dict]:
+    print(f"[shelters] 무더위쉼터 목록 호출\n", flush=True)
     return get_all_shelters()
-
 
 @router.get(
     "/routes",
@@ -56,10 +59,21 @@ def list_shelters() -> list[dict]:
     description="수지구 내 추천 경로 13개를 반환합니다. mode 파라미터로 필터링 가능합니다 (노약자 5개 / 반려동물 5개 / 일반 3개).",
     response_model=list[RecommendedRouteResponse],
 )
-def list_routes(mode: Mode | None = Query(default=None, description="모드 필터 — 생략 시 전체 반환")) -> list[dict]:
+def list_routes(
+    mode: Mode | None = Query(default=None, description="모드 필터 — 생략 시 전체 반환"),
+    tags: list[str] | None = Query(default=None, description="수신된 프리셋(태그) 목록") # 💡 태그를 받을 수 있도록 파라미터 추가
+) -> list[dict]:
+    print(f"📂 [데이터 조회] /routes 엔드포인트 호출됨", flush=True)
+    print(f"🏷️ [수신한 프리셋(태그)]: {tags}", flush=True)
+    print(f"⚙️ [수신한 모드]: {mode}", flush=True)
+
     if mode is not None and mode not in MODES:
+        print(f"⚠️ [경고] 유효하지 않은 모드({mode})로 빈 리스트 반환", flush=True)
         return []
-    return get_recommended_routes(mode=mode)
+    
+    routes = get_recommended_routes(mode=mode)
+    print(f"✅ [데이터 반환] {len(routes)}개의 추천 경로를 반환합니다.", flush=True)
+    return routes
 
 
 @router.get(
@@ -98,8 +112,10 @@ def list_top_routes(tags: list[str] | None = Query(default=None, description="�
     response_model=PresetExtractionResult,
 )
 async def receive_preset_text(request: PresetExtractionRequest) -> dict:
+    print(f"[preset] 입력받은 텍스트: '{request.text}'\n", flush=True)
     try:
         agent_text = await call_preset_agent(request.text)
+        # print(f"✅ [에이전트 응답]: {agent_text}\n", flush=True)
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=502, detail="클라이밋팟 에이전트 호출 실패") from exc
     except httpx.TimeoutException as exc:
@@ -107,6 +123,7 @@ async def receive_preset_text(request: PresetExtractionRequest) -> dict:
 
     preset_ids, dropped_ids = extract_preset_ids(agent_text)
     base_presets, sub_presets = classify_presets(preset_ids)
+    print(f"[preset] preset_ids: {preset_ids}\n(버려진 태그: {dropped_ids})", flush=True)
 
     routes = select_top_k_routes(preferred_tags=preset_ids, k=3, mode=None)
 

@@ -197,51 +197,53 @@ async def local_server(request: dict):
     return _build_local_preset_response(text)
 
 
-@app.post("/preset", response_model=PresetResponse)
-async def extract_presets(request: ConfirmedTextRequest):
-    user_text = request.text
+# @app.post("/preset", response_model=PresetResponse)
+# async def extract_presets(request: ConfirmedTextRequest):
+#     user_text = request.text
 
-    if not user_text:
-        raise HTTPException(status_code=400, detail="텍스트가 전달되지 않았습니다.")
+#     print(f"[preset] text:", request.text, flush=True)
 
-    if httpx is None:
-        raise HTTPException(status_code=503, detail="httpx가 설치되어 있지 않습니다.")
+#     if not user_text:
+#         raise HTTPException(status_code=400, detail="텍스트가 전달되지 않았습니다.")
 
-    # PRESET_BACKEND_URL = "실제 백서버 주소"
-    PRESET_BACKEND_URL = "http://127.0.0.1:8000/localServer"
+#     if httpx is None:
+#         raise HTTPException(status_code=503, detail="httpx가 설치되어 있지 않습니다.")
+
+#     # PRESET_BACKEND_URL = "실제 백서버 주소"
+#     PRESET_BACKEND_URL = "http://127.0.0.1:8000/localServer"
     
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                PRESET_BACKEND_URL,
-                json={"text": user_text},
-                timeout=15.0
-            )
-            response.raise_for_status() 
-            preset_data = response.json()
+#     try:
+#         async with httpx.AsyncClient() as client:
+#             response = await client.post(
+#                 PRESET_BACKEND_URL,
+#                 json={"text": user_text},
+#                 timeout=15.0
+#             )
+#             response.raise_for_status() 
+#             preset_data = response.json()
 
-        preset_data = _build_local_preset_response(user_text)
+#         preset_data = _build_local_preset_response(user_text)
 
-        base_list = preset_data.get("base_presets") or []
-        sub_list = preset_data.get("sub_presets") or []
+#         base_list = preset_data.get("base_presets") or []
+#         sub_list = preset_data.get("sub_presets") or []
 
-        base_list = base_list[:2]
-        # sub_list = sub_list[:3]
+#         base_list = base_list[:2]
+#         # sub_list = sub_list[:3]
 
-        print(f"[preset] text:", request.text)
-        print(f"[preset] base_presets: {base_list} / sub_presets: {sub_list}\n")
-
-        return PresetResponse(
-            base_presets=base_list,
-            sub_presets=sub_list
-        )
         
-    except httpx.RequestError as e:
-        print(f"PRESET 서버 통신 에러: {e}")
-        raise HTTPException(status_code=502, detail="AI 백엔드 서버와 통신할 수 없습니다.")
-    except Exception as e:
-        print(f"내부 에러: {e}")
-        raise HTTPException(status_code=500, detail="데이터를 처리하는 중 오류가 발생했습니다.")
+#         print(f"[preset] base_presets: {base_list}\n\tsub_presets: {sub_list}\n",flush=True)
+
+#         return PresetResponse(
+#             base_presets=base_list,
+#             sub_presets=sub_list
+#         )
+        
+#     except httpx.RequestError as e:
+#         print(f"PRESET 서버 통신 에러: {e}")
+#         raise HTTPException(status_code=502, detail="AI 백엔드 서버와 통신할 수 없습니다.")
+#     except Exception as e:
+#         print(f"내부 에러: {e}")
+#         raise HTTPException(status_code=500, detail="데이터를 처리하는 중 오류가 발생했습니다.")
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIST_DIR, html=True), name="frontend")
 # app.mount("/", StaticFiles(directory="kakaomap_test", html=True), name="testingFrontend")
