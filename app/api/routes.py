@@ -64,6 +64,11 @@ def list_routes(
     mode: Mode | None = Query(default=None, description="모드 필터 — 생략 시 전체 반환"),
     presets: list[str] | None = Query(default=None, description="수신된 프리셋 목록") # 💡 태그를 받을 수 있도록 파라미터 추가
 ) -> list[dict]:
+    if presets is not None and not isinstance(presets, list):
+        presets = None
+    if mode is not None and not isinstance(mode, str):
+        mode = None
+        
     global _last_extracted_presets, _last_recommended_routes
 
     print(f"[routes] 실제 수신한 프리셋: {presets}\n", flush=True)
