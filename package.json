@@ -3,5 +3,8 @@
     "proj4": "^2.21.0",
     "uvicorn": "^0.0.1-security",
     "whisper": "^0.3.3"
+  },
+  "devDependencies": {
+    "@types/proj4": "^2.5.6"
   }
 }

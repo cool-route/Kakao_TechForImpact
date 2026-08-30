@@ -29,7 +29,7 @@ The intended flow is:
 ---
 
 ## 로컬 설치 목록
-openai-whisper httpx python-multipart ffmpeg proj4
+openai-whisper httpx python-multipart ffmpeg(winget) proj4(npm install -D @types/proj4)
 
 ## 🚀 Running the code (설치 및 실행 방법)
 
