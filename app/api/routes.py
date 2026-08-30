@@ -61,10 +61,10 @@ def list_shelters() -> list[dict]:
 )
 def list_routes(
     mode: Mode | None = Query(default=None, description="모드 필터 — 생략 시 전체 반환"),
-    tags: list[str] | None = Query(default=None, description="수신된 프리셋(태그) 목록") # 💡 태그를 받을 수 있도록 파라미터 추가
+    presets: list[str] | None = Query(default=None, description="수신된 프리셋(태그) 목록") # 💡 태그를 받을 수 있도록 파라미터 추가
 ) -> list[dict]:
     print(f"📂 [데이터 조회] /routes 엔드포인트 호출됨", flush=True)
-    print(f"🏷️ [수신한 프리셋(태그)]: {tags}", flush=True)
+    print(f"🏷️ [수신한 프리셋(태그)]: {presets}", flush=True)
     print(f"⚙️ [수신한 모드]: {mode}", flush=True)
 
     if mode is not None and mode not in MODES:
@@ -123,7 +123,7 @@ async def receive_preset_text(request: PresetExtractionRequest) -> dict:
 
     preset_ids, dropped_ids = extract_preset_ids(agent_text)
     base_presets, sub_presets = classify_presets(preset_ids)
-    print(f"[preset] preset_ids: {preset_ids}\n(버려진 태그: {dropped_ids})", flush=True)
+    print(f"[preset] preset_ids: {preset_ids}\n(dropped_ids: {dropped_ids})", flush=True)
 
     routes = select_top_k_routes(preferred_tags=preset_ids, k=3, mode=None)
 
