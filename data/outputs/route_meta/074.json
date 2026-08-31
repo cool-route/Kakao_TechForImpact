@@ -43,6 +43,12 @@
     "walk_10m",
     "dongcheon",
     "cool_path",
-    "flat_path"
+    "flat_path",
+    "mobility_support",
+    "with_stroller",
+    "with_pet",
+    "low_surface_temp",
+    "low_heat_island",
+    "alone"
   ]
 }

@@ -44,6 +44,11 @@
     "dongcheon",
     "cool_path",
     "low_tmrt",
-    "flat_path"
+    "flat_path",
+    "mobility_support",
+    "with_stroller",
+    "with_pet",
+    "low_surface_temp",
+    "quiet_path"
   ]
 }

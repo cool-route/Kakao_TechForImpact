@@ -50,6 +50,9 @@
     "low_tmrt",
     "green_path",
     "shelter_route",
-    "shelter_rich"
+    "shelter_rich",
+    "with_pet",
+    "low_surface_temp",
+    "walk_15m"
   ]
 }

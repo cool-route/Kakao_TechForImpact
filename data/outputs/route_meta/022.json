@@ -43,6 +43,11 @@
     "walk_30m",
     "jukjeon_1",
     "green_path",
-    "flat_path"
+    "flat_path",
+    "with_pet",
+    "low_surface_temp",
+    "low_heat_island",
+    "walk_15m",
+    "alone"
   ]
 }

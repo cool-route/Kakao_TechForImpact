@@ -42,6 +42,8 @@
     "with_elder",
     "walk_30m",
     "sinbong",
-    "flat_path"
+    "flat_path",
+    "walk_15m",
+    "alone"
   ]
 }

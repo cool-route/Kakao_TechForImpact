@@ -45,6 +45,9 @@
     "cool_path",
     "low_tmrt",
     "shady_path",
-    "green_path"
+    "green_path",
+    "with_pet",
+    "low_surface_temp",
+    "quiet_path"
   ]
 }

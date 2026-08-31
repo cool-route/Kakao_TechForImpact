@@ -44,6 +44,8 @@
     "walk_30m",
     "pungdeokcheon_1",
     "pungdeokcheon_2",
-    "flat_path"
+    "flat_path",
+    "with_stroller",
+    "with_pet"
   ]
 }

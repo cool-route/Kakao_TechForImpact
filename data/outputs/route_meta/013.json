@@ -42,6 +42,7 @@
     "with_elder",
     "walk_10m",
     "dongcheon",
-    "cool_path"
+    "cool_path",
+    "low_surface_temp"
   ]
 }

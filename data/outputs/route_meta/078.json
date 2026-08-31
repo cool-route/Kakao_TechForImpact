@@ -43,6 +43,8 @@
     "walk_30m",
     "dongcheon",
     "green_path",
-    "flat_path"
+    "flat_path",
+    "with_stroller",
+    "low_heat_island"
   ]
 }

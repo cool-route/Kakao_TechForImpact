@@ -1,6 +1,7 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "description": "사전 생성된 추천 경로에 부여할 태그 매핑",
+  "_unused_note": "이 파일의 'routes' 배열은 app/services/route_service.py에서 읽히지 않습니다 (참고용 사본일 뿐). 실제 알고리즘이 사용하는 경로별 태그의 원본은 data/outputs/route_meta/*.json 의 'tags' 필드이며, 이 파일은 그 값을 그대로 미러링해둔 것입니다. 'tag_weights'만 실제로 select_top_k_routes()에서 사용됩니다.",
   "routes": [
     {
       "route_id": 1,
@@ -11,7 +12,10 @@
         "jukjeon_1",
         "cool_path",
         "low_tmrt",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "alone"
       ]
     },
     {
@@ -23,7 +27,10 @@
         "dongcheon",
         "cool_path",
         "low_tmrt",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "alone"
       ]
     },
     {
@@ -33,7 +40,9 @@
         "with_elder",
         "walk_10m",
         "jukjeon_2",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "alone"
       ]
     },
     {
@@ -46,7 +55,10 @@
         "cool_path",
         "low_tmrt",
         "shady_path",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp",
+        "quiet_path"
       ]
     },
     {
@@ -57,7 +69,9 @@
         "walk_10m",
         "jukjeon_1",
         "cool_path",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "alone"
       ]
     },
     {
@@ -67,7 +81,9 @@
         "with_elder",
         "walk_10m",
         "jukjeon_2",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "alone"
       ]
     },
     {
@@ -77,7 +93,9 @@
         "with_elder",
         "walk_10m",
         "pungdeokcheon_1",
-        "flat_path"
+        "flat_path",
+        "low_heat_island",
+        "alone"
       ]
     },
     {
@@ -87,7 +105,8 @@
         "with_elder",
         "walk_10m",
         "jukjeon_1",
-        "flat_path"
+        "flat_path",
+        "alone"
       ]
     },
     {
@@ -97,7 +116,8 @@
         "with_elder",
         "walk_10m",
         "dongcheon",
-        "flat_path"
+        "flat_path",
+        "low_heat_island"
       ]
     },
     {
@@ -107,7 +127,8 @@
         "with_elder",
         "walk_10m",
         "dongcheon",
-        "green_path"
+        "green_path",
+        "low_heat_island"
       ]
     },
     {
@@ -117,7 +138,8 @@
         "with_elder",
         "walk_10m",
         "sinbong",
-        "green_path"
+        "green_path",
+        "with_pet"
       ]
     },
     {
@@ -128,7 +150,10 @@
         "walk_10m",
         "sinbong",
         "cool_path",
-        "flat_path"
+        "flat_path",
+        "with_pet",
+        "low_surface_temp",
+        "alone"
       ]
     },
     {
@@ -138,7 +163,8 @@
         "with_elder",
         "walk_10m",
         "dongcheon",
-        "cool_path"
+        "cool_path",
+        "low_surface_temp"
       ]
     },
     {
@@ -148,7 +174,9 @@
         "with_elder",
         "walk_10m",
         "dongcheon",
-        "flat_path"
+        "flat_path",
+        "low_heat_island",
+        "alone"
       ]
     },
     {
@@ -158,7 +186,9 @@
         "with_elder",
         "walk_10m",
         "jukjeon_2",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "alone"
       ]
     },
     {
@@ -171,7 +201,10 @@
         "cool_path",
         "low_tmrt",
         "shady_path",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "quiet_path"
       ]
     },
     {
@@ -183,7 +216,12 @@
         "dongcheon",
         "cool_path",
         "low_tmrt",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "with_pet",
+        "low_surface_temp",
+        "quiet_path"
       ]
     },
     {
@@ -204,7 +242,8 @@
         "with_elder",
         "walk_30m",
         "dongcheon",
-        "cool_path"
+        "cool_path",
+        "walk_15m"
       ]
     },
     {
@@ -228,7 +267,11 @@
         "jukjeon_3",
         "cool_path",
         "low_tmrt",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp",
+        "walk_15m",
+        "quiet_path"
       ]
     },
     {
@@ -239,7 +282,12 @@
         "walk_30m",
         "jukjeon_1",
         "green_path",
-        "flat_path"
+        "flat_path",
+        "with_pet",
+        "low_surface_temp",
+        "low_heat_island",
+        "walk_15m",
+        "alone"
       ]
     },
     {
@@ -262,7 +310,9 @@
         "walk_30m",
         "pungdeokcheon_1",
         "pungdeokcheon_2",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "with_pet"
       ]
     },
     {
@@ -273,7 +323,8 @@
         "walk_30m",
         "pungdeokcheon_1",
         "pungdeokcheon_2",
-        "flat_path"
+        "flat_path",
+        "low_heat_island"
       ]
     },
     {
@@ -283,7 +334,9 @@
         "with_elder",
         "walk_30m",
         "sinbong",
-        "flat_path"
+        "flat_path",
+        "walk_15m",
+        "alone"
       ]
     },
     {
@@ -304,7 +357,8 @@
         "with_elder",
         "walk_30m",
         "jukjeon_3",
-        "green_path"
+        "green_path",
+        "low_heat_island"
       ]
     },
     {
@@ -315,7 +369,8 @@
         "walk_30m",
         "seongbok",
         "pungdeokcheon_2",
-        "green_path"
+        "green_path",
+        "low_heat_island"
       ]
     },
     {
@@ -326,7 +381,9 @@
         "walk_30m",
         "sinbong",
         "cool_path",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -372,7 +429,10 @@
         "jukjeon_1",
         "cool_path",
         "low_tmrt",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "quiet_path"
       ]
     },
     {
@@ -384,7 +444,9 @@
         "jukjeon_3",
         "jukjeon_1",
         "cool_path",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -422,7 +484,9 @@
         "walk_60m",
         "jukjeon_3",
         "cool_path",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -444,7 +508,8 @@
         "seongbok",
         "pungdeokcheon_2",
         "sinbong",
-        "green_path"
+        "green_path",
+        "with_pet"
       ]
     },
     {
@@ -482,7 +547,8 @@
         "dongcheon",
         "jukjeon_2",
         "green_path",
-        "flat_path"
+        "flat_path",
+        "low_heat_island"
       ]
     },
     {
@@ -494,7 +560,9 @@
         "jukjeon_3",
         "jukjeon_1",
         "cool_path",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -531,7 +599,8 @@
         "jukjeon_2",
         "cool_path",
         "green_path",
-        "flat_path"
+        "flat_path",
+        "with_pet"
       ]
     },
     {
@@ -583,7 +652,9 @@
         "jukjeon_1",
         "jukjeon_2",
         "cool_path",
-        "green_path"
+        "green_path",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -715,7 +786,10 @@
         "cool_path",
         "green_path",
         "shelter_route",
-        "shelter_rich"
+        "shelter_rich",
+        "with_pet",
+        "low_surface_temp",
+        "walk_15m"
       ]
     },
     {
@@ -731,7 +805,10 @@
         "low_tmrt",
         "green_path",
         "shelter_route",
-        "shelter_rich"
+        "shelter_rich",
+        "with_pet",
+        "low_surface_temp",
+        "walk_15m"
       ]
     },
     {
@@ -755,7 +832,8 @@
         "pungdeokcheon_1",
         "flat_path",
         "shelter_route",
-        "shelter_rich"
+        "shelter_rich",
+        "low_heat_island"
       ]
     },
     {
@@ -770,7 +848,9 @@
         "cool_path",
         "green_path",
         "shelter_route",
-        "shelter_rich"
+        "shelter_rich",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -785,7 +865,9 @@
         "cool_path",
         "green_path",
         "shelter_route",
-        "shelter_rich"
+        "shelter_rich",
+        "with_pet",
+        "low_surface_temp"
       ]
     },
     {
@@ -799,7 +881,8 @@
         "sanghyeon_2",
         "green_path",
         "shelter_route",
-        "shelter_rich"
+        "shelter_rich",
+        "with_pet"
       ]
     },
     {
@@ -834,7 +917,8 @@
         "walk_10m",
         "pungdeokcheon_2",
         "seongbok",
-        "green_path"
+        "green_path",
+        "with_pet"
       ]
     },
     {
@@ -844,7 +928,9 @@
         "with_elder",
         "walk_10m",
         "pungdeokcheon_1",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "alone"
       ]
     },
     {
@@ -854,7 +940,13 @@
         "with_elder",
         "walk_10m",
         "dongcheon",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "with_pet",
+        "low_surface_temp",
+        "low_heat_island",
+        "alone"
       ]
     },
     {
@@ -864,7 +956,9 @@
         "with_elder",
         "walk_10m",
         "pungdeokcheon_1",
-        "flat_path"
+        "flat_path",
+        "low_heat_island",
+        "alone"
       ]
     },
     {
@@ -875,7 +969,13 @@
         "walk_10m",
         "dongcheon",
         "cool_path",
-        "flat_path"
+        "flat_path",
+        "mobility_support",
+        "with_stroller",
+        "with_pet",
+        "low_surface_temp",
+        "low_heat_island",
+        "alone"
       ]
     },
     {
@@ -885,7 +985,9 @@
         "with_elder",
         "walk_10m",
         "sinbong",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "alone"
       ]
     },
     {
@@ -895,7 +997,10 @@
         "with_elder",
         "walk_10m",
         "dongcheon",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "low_heat_island",
+        "alone"
       ]
     },
     {
@@ -906,7 +1011,8 @@
         "walk_30m",
         "pungdeokcheon_1",
         "dongcheon",
-        "flat_path"
+        "flat_path",
+        "low_heat_island"
       ]
     },
     {
@@ -917,7 +1023,9 @@
         "walk_30m",
         "dongcheon",
         "green_path",
-        "flat_path"
+        "flat_path",
+        "with_stroller",
+        "low_heat_island"
       ]
     },
     {
@@ -928,7 +1036,8 @@
         "walk_30m",
         "dongcheon",
         "pungdeokcheon_1",
-        "flat_path"
+        "flat_path",
+        "with_stroller"
       ]
     },
     {
@@ -939,34 +1048,49 @@
         "walk_30m",
         "pungdeokcheon_2",
         "cool_path",
-        "flat_path"
+        "flat_path",
+        "with_pet",
+        "low_surface_temp"
       ]
     }
   ],
   "tag_weights": {
-    "시원한길": 1.0,
-    "그늘많음": 0.9,
-    "무더위쉼터 경유": 0.8,
-    "표면온도낮음": 0.95,
-    "쉼터많음": 0.8,
-    "평지": 0.7,
-    "30분": 0.85,
-    "15분": 0.65,
-    "45분": 0.6,
-    "60분": 0.45,
-    "반려동물": 0.9,
-    "노약자": 0.8,
-    "더위민감": 0.75,
-    "걷기쉬움": 0.6,
-    "편의점": 0.55,
-    "조용한길": 0.5,
-    "공원근처": 0.58,
-    "왕복": 0.5,
-    "편도": 0.4
+    "with_elder": 0.8,
+    "cool_path": 1.0,
+    "shady_path": 0.9,
+    "low_tmrt": 0.95,
+    "low_surface_temp": 0.9,
+    "low_heat_island": 0.75,
+    "shelter_route": 0.8,
+    "shelter_rich": 0.8,
+    "green_path": 0.85,
+    "flat_path": 0.7,
+    "park_route": 0.6,
+    "water_route": 0.6,
+    "quiet_path": 0.4,
+    "walk_10m": 0.9,
+    "walk_15m": 0.8,
+    "walk_30m": 0.6,
+    "walk_60m": 0.4,
+    "walk_120m_plus": 0.25,
+    "with_pet": 0.8,
+    "with_stroller": 0.8,
+    "mobility_support": 0.8,
+    "alone": 0.4,
+    "jukjeon_1": 0.5,
+    "jukjeon_2": 0.5,
+    "jukjeon_3": 0.5,
+    "dongcheon": 0.5,
+    "sanghyeon_1": 0.5,
+    "sanghyeon_2": 0.5,
+    "sanghyeon_3": 0.5,
+    "pungdeokcheon_1": 0.5,
+    "pungdeokcheon_2": 0.5,
+    "seongbok": 0.5,
+    "sinbong": 0.5
   },
   "scoring_rules": {
     "match_score": "sum(weight for each matched tag)",
-    "mismatch_penalty": "0.15 per explicitly excluded tag",
     "tie_breakers": [
       "lower_heat_score_avg",
       "shorter_distance_m",

@@ -45,6 +45,9 @@
     "cool_path",
     "low_tmrt",
     "shady_path",
-    "flat_path"
+    "flat_path",
+    "mobility_support",
+    "with_stroller",
+    "quiet_path"
   ]
 }
