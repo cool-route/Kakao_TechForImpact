@@ -177,7 +177,7 @@ export default function RouteResultScreen({ selectedTags, onBack, onSelectRoute,
           ? '?' + selectedTags.map(tag => `presets=${encodeURIComponent(tag.id)}`).join('&')
           : '';
         
-        const res = await fetch(`http://localhost:8000/routes${queryParams}`);
+        const res = await fetch(`/routes${queryParams}`);
         
         if (res.ok) {
           const data = await res.json();

@@ -69,7 +69,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
         setRecognizedText("텍스트로 변환하고 있어요...");
 
         try {
-          const res = await fetch('http://localhost:8000/speech', { 
+          const res = await fetch('/speech', { 
             method: 'POST', 
             body: formData 
           });
@@ -159,7 +159,7 @@ export default function SearchFlow({ step, setStep, recognizedText, setRecognize
   try {
     setAnalyzeError(false);
 
-    const res = await fetch('http://localhost:8000/preset', {
+    const res = await fetch('/preset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: recognizedText })
