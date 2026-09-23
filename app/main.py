@@ -160,30 +160,29 @@ def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 app.include_router(route_router)
-model = whisper.load_model("base") if whisper is not None else None
+
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 if multipart is not None:
 
     @app.post("/speech")
     async def speech_to_text(audio: UploadFile = File(...)):
-        if model is None:
-            raise HTTPException(status_code=503, detail="Whisper 모델이 설치되어 있지 않습니다.")
+        if not GROQ_API_KEY:
+            raise HTTPException(status_code=503, detail="GROQ_API_KEY가 설정되어 있지 않습니다.")
 
-        # 1. 임시 파일로 저장
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
-            temp_file_path = temp_audio.name
-            content = await audio.read()
-            temp_audio.write(content)
-
+        content = await audio.read()
         try:
-            # 2. 로컬 Whisper 모델로 추론
-            result = model.transcribe(temp_file_path, language="ko")
-            return {"text": result["text"]}
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(
+                    "https://api.groq.com/openai/v1/audio/transcriptions",
+                    headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                    files={"file": ("audio.webm", content, "audio/webm")},
+                    data={"model": "whisper-large-v3-turbo", "language": "ko"},
+                )
+                resp.raise_for_status()
+            return {"text": resp.json()["text"]}
         except Exception as e:
-            return {"error": str(e)}
-        finally:
-            # 3. 임시 파일 삭제
-            os.remove(temp_file_path)
+            return {"error": str(e)}        
 
 # 로컬 임시 서버
 @app.post("/localServer")
